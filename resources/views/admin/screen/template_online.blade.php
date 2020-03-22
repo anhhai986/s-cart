@@ -49,7 +49,7 @@
                         <td>{!! sc_image_render($plugin['image'],'50px', '', $plugin['name']) !!}</td>
                         <td>{{ $plugin['key'] }}</td>
                         <td>{{ $plugin['name'] }} <span data-toggle="tooltip" title="{!! $plugin['description'] !!}"><i class="fa fa-info-circle" aria-hidden="true"></i></span></td>
-                        <td>{{ $plugin['key']??'' }}</td>
+                        <td>{{ $plugin['version']??'' }}</td>
                         <td>{{ $plugin['auth']??'' }}</td>
                         <td><a target=_new href="{{ $plugin['link'] }}"><i class="fa fa-chain-broken" aria-hidden="true"></i> {!! trans('template.link') !!}</a></td>
                         <td>{!! $plugin['price']? $plugin['price']:'<span class="label label-success">'.trans('template.free').'</span>' !!}</td>
