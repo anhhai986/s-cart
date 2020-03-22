@@ -14,6 +14,7 @@ return [
     'language' => 'Ngôn ngữ mặc định',
     'timezone' => 'Múi giờ',
     'maintain_content' => 'Thông báo bảo trì',
+    'maintain_manager' => 'Bảo trì website',
     'currency' => 'Tiền tệ mặc định',
     'site_status' => 'TẮT/MỞ website',
     'template' => 'Giao diện',

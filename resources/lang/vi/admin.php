@@ -79,13 +79,14 @@ return [
 
     'alert' => 'Thông báo',
 
-    'parent_id' => 'Parent',
+    'parent_id' => 'Cấp cha',
     'icon' => 'Icon',
     'uri' => 'URI',
 
     'operation_log' => 'Log admin',
     'parent_select_error' => 'Parent select error',
-
+    'maintain_enable'                   => 'Chế độ bảo trì',
+    'maintain_disable'                  => 'Tắt bảo trì',
     'pagination' => [
         'range' => 'Showing :first to :last of :total entries',
     ],
