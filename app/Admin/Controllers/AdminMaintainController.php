@@ -5,6 +5,7 @@ namespace App\Admin\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\AdminStore;
 use App\Models\ShopLanguage;
+use App\Models\AdminStoreDescription;
 use Illuminate\Http\Request;
 use Validator;
 
@@ -22,7 +23,7 @@ class AdminMaintainController extends Controller
     {
         $languages = ShopLanguage::getCodeActive();
         $data = [
-            'title' => trans('store_info.maintain_manager'),
+            'title' => trans('maintain.admin.title'),
             'subTitle' => '',
             'icon' => 'fa fa-indent',
         ];
@@ -44,7 +45,7 @@ class AdminMaintainController extends Controller
             return 'no data';
         }
         $data = [
-            'title' => trans('store_info.maintain_manager'),
+            'title' => trans('maintain.admin.title'),
             'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
@@ -61,10 +62,11 @@ class AdminMaintainController extends Controller
  */
     public function postEdit()
     {
+        $id = 1;
         $data = request()->all();
         $dataOrigin = request()->all();
         $validator = Validator::make($dataOrigin, [
-            'descriptions.*.maintain' => 'required|string',
+            'descriptions.*.maintain_content' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -72,25 +74,13 @@ class AdminMaintainController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
-//Edit
-
-        $obj = AdminStore::find(1);
-        $obj->descriptions()->delete();
-        $dataDes = [];
+        //Edit
         foreach ($data['descriptions'] as $code => $row) {
-            $dataDes[] = [
-                'shop_news_id' => $id,
-                'lang' => $code,
-                'title' => $row['title'],
-                'maintain' => $row['maintain'],
-                'description' => $row['description'],
-                'content' => $row['content'],
-            ];
+            (new AdminStoreDescription)->where('config_id', $id)->where('lang', $code)
+            ->update(['maintain_content' => $row['maintain_content']]);
         }
-        ShopNewsDescription::insert($dataDes);
-
 //
-        return redirect()->route('admin_banner.index')->with('success', trans('banner.admin.edit_success'));
+        return redirect()->route('admin_maintain.index')->with('success', trans('maintain.admin.edit_success'));
 
     }
 }

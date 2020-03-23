@@ -1,7 +1,7 @@
 <?php
 //Check install
 if (is_file('install.php')) {
-    $pathInstall = str_replace('index.php','install.php',$_SERVER['PHP_SELF']);
+    $pathInstall = str_replace('index.php','install.php', $_SERVER['PHP_SELF']);
     header('Location: '.$pathInstall);
     exit;
 }

@@ -1,9 +1,6 @@
 @if (sc_config('SITE_STATUS') == 'off')
-  @include($templatePath . '.maintenance')
-  @php
-    exit();
-  @endphp
-@endif
+    @include($templatePath . '.maintenance')
+@else
 
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
@@ -189,3 +186,4 @@
 
 </body>
 </html>
+@endif

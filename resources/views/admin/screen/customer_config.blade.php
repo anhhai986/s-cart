@@ -192,7 +192,7 @@ $('.grid-trash').on('click', function() {
     isChecked = (isChecked == false)?0:1;
     var name = $(this).attr('name');
       $.ajax({
-        url: '{{ route('admin_store_value.update') }}',
+        url: '{{ route('admin_setting.update') }}',
         type: 'POST',
         dataType: 'JSON',
         data: {"name": name,"value":isChecked,"_token": "{{ csrf_token() }}",},

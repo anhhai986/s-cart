@@ -11,7 +11,7 @@
 
       <div class="box-header with-border">
         <div class="pull-right">
-        <h2><a href="{{ route('admin_maintain.edit') }}"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{ trans('admin.edit') }}</h2></h2>
+        <h3><a href="{{ route('admin_maintain.edit') }}"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{ trans('admin.edit') }}</a></h3>
         </div>
         <div class="pull-left">
           <input id="maintain_mode" data-on-text="{{ trans('admin.maintain_enable') }}" data-off-text="{{ trans('admin.maintain_disable') }}" type="checkbox"  {{ (sc_config('SITE_STATUS') == 'off'?'checked':'') }}>
@@ -80,7 +80,7 @@
           $.ajax({
             type: 'POST',
             dataType:'json',
-            url: "{{ route('admin_store_value.update') }}",
+            url: "{{ route('admin_setting.update') }}",
             data: {
               "_token": "{{ csrf_token() }}",
               "name": "SITE_STATUS",

@@ -64,18 +64,18 @@
            @elseif($config->key == 'smtp_port')
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="number" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="number" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
              </tr>
            @elseif($config->key == 'smtp_password')
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">****</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">****</a></td>
              </tr>
 
           @else
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
              </tr>
            @endif
 
@@ -257,7 +257,7 @@ $('.grid-trash').on('click', function() {
     isChecked = (isChecked == false)?0:1;
     var name = $(this).attr('name');
       $.ajax({
-        url: '{{ route('admin_store_value.update') }}',
+        url: '{{ route('admin_setting.update') }}',
         type: 'POST',
         dataType: 'JSON',
         data: {"name": name,"value":isChecked,"_token": "{{ csrf_token() }}",},

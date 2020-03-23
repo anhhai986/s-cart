@@ -102,26 +102,6 @@
     </div>
   </div>
 
-
-  <div class="col-md-12">
-    <div class="box box-primary">
-        @foreach ($infosDescription as $obj => $infoDescription)
-          @if ($obj =='maintain_content')
-            @foreach ($infoDescription as $codeLanguage => $des)
-              <div class="box-header with-border">
-                <h3 class="box-title">{{ trans('store_info.maintain_content') }} {{ $languages[$codeLanguage] }}</h3>
-              </div>
-              <div class="box-body table-responsive no-padding box-primary">
-                    <a href="#" class="fied-required editable editable-click" data-name="{{ $obj.'__'.$codeLanguage }}" data-type="textarea" data-pk="" data-source="" data-url="{{ route('admin_store_info.update') }}" data-title="{{ trans('store_info.'.$obj) }}" data-value="{{ $des }}" data-original-title="" title="">{!!$des !!}</a>
-              </div>
-              @endforeach
-            @endif
-        @endforeach
-    </div>
-  </div>
-
-
-
 </div>
 
 
