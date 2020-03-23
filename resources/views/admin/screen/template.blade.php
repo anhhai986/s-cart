@@ -16,6 +16,8 @@
                 <tr>
                   <th>{{ trans('template.image') }}</th>
                   <th>{{ trans('template.name') }}</th>
+                  <th>{{ trans('template.code') }}</th>
+                  <th>{{ trans('template.image_demo') }}</th>
                   <th>{{ trans('template.auth') }}</th>
                   <th>{{ trans('template.email') }}</th>
                   <th>{{ trans('template.website') }}</th>
@@ -29,6 +31,8 @@
                     <tr>
                      <td>{!!sc_image_render($template['config']['image']??'','50px','', $template['config']['name']??'')!!}</td>
                      <td>{{ $template['config']['name']??'' }}</td>
+                     <td>{{ $key??'' }}</td>
+                     <td onclick="imagedemo('{{ asset('templates/'.$key.'/images/demo.jpg') }}')"><a>Click</a></td>
                      <td>{{ $template['config']['username']??'' }}</td>
                      <td>{{ $template['config']['email']??'' }}</td>
                      <td>{{ $template['config']['website']??'' }} <a href="{{ $template['config']['website']??'' }}" target=_new><i class="fa fa-share" aria-hidden="true"></i></a></td>
@@ -123,5 +127,16 @@
         })
     }
 
+function imagedemo(image) {
+  Swal.fire({
+    title: '{{  trans('template.image_demo') }}',
+    text: '',
+    imageUrl: image,
+    imageWidth: 800,
+    imageHeight: 800,
+    imageAlt: 'Image demo',
+  })
+}
+    
   </script>
 @endpush

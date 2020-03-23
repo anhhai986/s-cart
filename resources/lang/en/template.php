@@ -28,6 +28,8 @@ return [
     'free'      => 'Free',
     'date'      => 'Date',
     'located'      => 'Located',
+    'code' => 'Code',
+    'image_demo' => 'Image demo',
     'guide'      => 'Read document in <a target=_new href="https://s-cart.org/guide/template.html">HERE</a>',
     'admin'      => [
         'list'  => 'Template list',
