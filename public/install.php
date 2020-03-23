@@ -146,8 +146,9 @@ if (request()->method() == 'POST' && request()->ajax()) {
                 break;
 
                 case 'step2-5':
+                    session(['infoInstall'=> request('infoInstall')]);
                     try {
-                        Artisan::call('migrate --path=/database/migrations/2020_00_00_step5_insert_database_shop.php');
+                        Artisan::call('migrate --path=/database/migrations/2020_00_00_step5_insert_database_product.php');
                         Artisan::call('passport:install');
                     } catch(\Exception $e) {
                         echo json_encode([
@@ -156,6 +157,7 @@ if (request()->method() == 'POST' && request()->ajax()) {
                         ]);
                         break;
                     }
+                    session()->forget('infoInstall');
                     echo json_encode([
                         'error' => '0',
                         'msg' => trans('install.database.process_sucess_5'),

@@ -263,10 +263,10 @@ if (!function_exists('sc_report')) {
             //
         }
 
-        $pathLog = storage_path('logs/handle/'.date('Y-m-d').'.txt');
-        $logFile = fopen($pathLog, "a+") or die("Unable to open file!");
-        fwrite($logFile, $msg);
-        fclose($logFile);
+        // $pathLog = storage_path('logs/handle/'.date('Y-m-d').'.txt');
+        // $logFile = fopen($pathLog, "a+") or die("Unable to open file!");
+        // fwrite($logFile, $msg);
+        // fclose($logFile);
     }
 }
 
