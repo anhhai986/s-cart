@@ -219,7 +219,7 @@ class InsertDatabaseAdmin extends Migration
             ['group' => '', 'code' => 'upload', 'key' => 'upload_watermark_status', 'value' => '1', 'sort' => '0', 'detail' => '', 'store_id' => '1'],
             ['group' => '', 'code' => 'upload', 'key' => 'upload_watermark_path', 'value' => 'images/watermark.png', 'sort' => '0', 'detail' => '', 'store_id' => '1'],
 
-            ['group' => '', 'code' => 'env', 'key' => 'SITE_STATUS', 'value' => 'on', 'sort' => '0', 'detail' => 'lang::env.SITE_STATUS', 'store_id' => '1'],
+            ['group' => '', 'code' => 'maintain', 'key' => 'SITE_STATUS', 'value' => 'on', 'sort' => '0', 'detail' => 'lang::env.SITE_STATUS', 'store_id' => '1'],
             ['group' => '', 'code' => 'env', 'key' => 'SITE_TIMEZONE', 'value' => $this->timezone_default, 'sort' => '0', 'detail' => 'lang::env.SITE_TIMEZONE', 'store_id' => '1'],
             ['group' => '', 'code' => 'env', 'key' => 'SITE_LANGUAGE', 'value' => $this->language_default, 'sort' => '0', 'detail' => 'lang::env.SITE_LANGUAGE', 'store_id' => '1'],
             ['group' => '', 'code' => 'env', 'key' => 'SITE_CURRENCY', 'value' => 'USD', 'sort' => '0', 'detail' => 'lang::env.SITE_CURRENCY', 'store_id' => '1'],

@@ -406,6 +406,7 @@ function installDatabaseStep4(infoInstall){
         data: {step: 'step2-4', 'infoInstall':infoInstall},
     })
     .done(function(data) {
+
          error= parseInt(data.error);
         if(error != 1 && error !=0){
             $('#msg').removeClass('success');
@@ -414,11 +415,12 @@ function installDatabaseStep4(infoInstall){
         }
         else if(error === 0)
         {
+            var infoInstall = data.infoInstall;
             $('#msg').addClass('success');
             $('#msg').html(data.msg);
-            $('.progress-bar').css("width","80%");
-            $('.progress-bar').html("80%");
-            setTimeout(completeInstall, 1000);
+            $('.progress-bar').css("width","75%");
+            $('.progress-bar').html("75%");
+            setTimeout(installDatabaseStep5(infoInstall), 1000);
         }else{
             $('#msg').removeClass('success');
             $('#msg').addClass('error');
@@ -430,6 +432,41 @@ function installDatabaseStep4(infoInstall){
         $('#msg').removeClass('success');
         $('#msg').addClass('error');
         $('#msg').html('{{ trans('install.database.error_4') }}');
+    })
+}
+
+function installDatabaseStep5(infoInstall){
+    $.ajax({
+        url: 'install.php{{ $path_lang }}',
+        type: 'POST',
+        dataType: 'json',
+        data: {step: 'step2-5', 'infoInstall':infoInstall},
+    })
+    .done(function(data) {
+         error= parseInt(data.error);
+        if(error != 1 && error !=0){
+            $('#msg').removeClass('success');
+            $('#msg').addClass('error');
+            $('#msg').html(data);
+        }
+        else if(error === 0)
+        {
+            $('#msg').addClass('success');
+            $('#msg').html(data.msg);
+            $('.progress-bar').css("width","85%");
+            $('.progress-bar').html("85%");
+            setTimeout(completeInstall, 1000);
+        }else{
+            $('#msg').removeClass('success');
+            $('#msg').addClass('error');
+            $('#msg').html(data.msg);
+        }
+
+    })
+    .fail(function() {
+        $('#msg').removeClass('success');
+        $('#msg').addClass('error');
+        $('#msg').html('{{ trans('install.database.error_5') }}');
     })
 }
 

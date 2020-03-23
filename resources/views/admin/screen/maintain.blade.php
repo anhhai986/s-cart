@@ -11,6 +11,7 @@
 
       <div class="box-header with-border">
         <div class="pull-right">
+        <h2><a href="{{ route('admin_maintain.edit') }}"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{ trans('admin.edit') }}</h2></h2>
         </div>
         <div class="pull-left">
           <input id="maintain_mode" data-on-text="{{ trans('admin.maintain_enable') }}" data-off-text="{{ trans('admin.maintain_disable') }}" type="checkbox"  {{ (sc_config('SITE_STATUS') == 'off'?'checked':'') }}>
@@ -66,25 +67,24 @@
 
   </script>
     {{-- //End pjax --}}
-
     <script type="text/javascript">
       $("#maintain_mode").bootstrapSwitch();
       $('#maintain_mode').on('switchChange.bootstrapSwitch', function (event, state) {
-          var data_config;
+          var site_status;
           if (state == true) {
-              data_config =  'on';
+              site_status =  'off';
           } else {
-              data_config = 'off';
+              site_status = 'on';
           }
           $('#loading').show()
           $.ajax({
             type: 'POST',
             dataType:'json',
-            url: "urlUpdate",
+            url: "{{ route('admin_store_value.update') }}",
             data: {
-              "_token": "$csrf_token",
-              "name": "maintain_mode",
-              "value": data_config
+              "_token": "{{ csrf_token() }}",
+              "name": "SITE_STATUS",
+              "value": site_status
             },
             success: function (response) {
                 console.log(response);

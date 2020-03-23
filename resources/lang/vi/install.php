@@ -27,6 +27,7 @@ return [
         'process_2' => 'Cài đặt bảng dữ liệu shop',
         'process_3' => 'Thêm dữ liệu admin',
         'process_4' => 'Thêm dữ liệu shop',
+        'process_5' => 'Thêm dữ liệu sản phẩm, danh mục',
         'process_sucess' => 'Cài đặt dữ liệu thành công!',
         'process_sucess_1' => 'Hoàn thành tạo bảng dữ liệu!',
         'process_sucess_2' => 'Hoàn thành thêm dữ liệu mẫu!',
@@ -35,6 +36,7 @@ return [
         'error_2' => 'Lỗi trong khi tạo bảng shop',
         'error_3' => 'Lỗi trong khi thêm dữ liệu admin',
         'error_4' => 'Lỗi trong khi thêm dữ liệu shop',
+        'error_5' => 'Lỗi trong khi thêm dữ liệu sản phẩm, category',
     ],
     'permission' => [
         'process' => 'Thiết lập quyền các thư mục',
