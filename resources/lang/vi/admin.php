@@ -85,8 +85,8 @@ return [
 
     'operation_log' => 'Log admin',
     'parent_select_error' => 'Parent select error',
-    'maintain_enable'                   => 'Chế độ bảo trì',
-    'maintain_disable'                  => 'Tắt bảo trì',
+    'maintain_enable'                   => 'BẬT bảo trì',
+    'maintain_disable'                  => 'TẮT bảo trì',
     'pagination' => [
         'range' => 'Showing :first to :last of :total entries',
     ],

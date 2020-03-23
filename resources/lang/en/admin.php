@@ -84,8 +84,8 @@ return [
 
       'operation_log'                     => 'Operation log',
       'parent_select_error'               => 'Parent select error',
-      'maintain_enable'                   => 'Enable maintain',
-      'maintain_disable'                  => 'Off maintain',
+      'maintain_enable'                   => 'ON maintain',
+      'maintain_disable'                  => 'OFF maintain',
       'parent_select_error'               => 'Parent select error',
 
       'pagination'                        => [
