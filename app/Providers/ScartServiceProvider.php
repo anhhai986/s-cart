@@ -16,7 +16,7 @@ class ScartServiceProvider extends ServiceProvider
         foreach (glob(app_path() . '/Library/Helpers/*.php') as $filename) {
             require_once $filename;
         }
-        if(!file_exists(public_path('install.php')) && file_exists(base_path('.env'))) {
+        if(!file_exists(public_path('install.php'))) {
             foreach (glob(app_path() . '/Plugins/*/*/Provider.php') as $filename) {
                 require_once $filename;
             }

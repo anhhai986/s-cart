@@ -33,6 +33,9 @@ class AdminPluginsController extends Controller
         if($code == 'Shipping') {
             $arrDefault[] = 'ShippingStandard';
         }
+        if($code == 'Total') {
+            $arrDefault[] = 'Discount';
+        }
         $pluginsInstalled = sc_get_plugin_installed($code, $onlyActive = false);
         $plugins = sc_get_all_plugin($code);
         $title = trans('admin.plugin_manager.' . $code.'_plugin');
