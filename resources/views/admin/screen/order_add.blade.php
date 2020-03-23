@@ -248,13 +248,11 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-  <link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
+
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+
 
 <script type="text/javascript">
 

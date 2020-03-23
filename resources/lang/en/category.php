@@ -1,7 +1,8 @@
 <?php
 return [
     'id'          => 'ID',
-    'name'        => 'Name',
+    'title'        => 'Name',
+    'title'        => 'Title',
     'keyword'     => 'Keyword',
     'alias'                 => 'Url customize <span class="seo" title="SEO"><i class="fa fa-coffee" aria-hidden="true"></i></span>',
     'alias_validate'        => 'Maximum 100 characters in the group: "A-Z", "a-z", "0-9" and "-_" ',
@@ -32,10 +33,10 @@ return [
         'sort_order'      => [
             'id_asc'    => 'ID asc',
             'id_desc'   => 'ID desc',
-            'name_asc'  => 'Name asc',
-            'name_desc' => 'Name desc',
+            'title_asc'  => 'Title asc',
+            'title_desc' => 'Title desc',
         ],
         'search'          => 'Search',
-        'search_place'    => 'Search Name or ID',
+        'search_place'    => 'Search Title or ID',
     ],
 ];

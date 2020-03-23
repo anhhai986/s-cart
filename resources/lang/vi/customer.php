@@ -35,7 +35,7 @@ return [
         'add_new_des'    => 'Tạo mới một khách hàng',
         'export'         => 'Xuất',
         'refresh'        => 'Làm mới',
-        'result_item'    => 'Showing <b>:item_from</b> to <b>:item_to</b> of <b>:item_total</b> items</b>',
+        'result_item'    => 'Hiển thị <b>:item_from</b> tới <b>:item_to</b> trong số <b>:item_total</b> kết quả</b>',
         'sort'           => 'Sắp xếp',
         'select_country' => 'Chọn quốc gia',
         'keep_password'  => 'Để trống nếu không muốn thay đổi mật khẩu',

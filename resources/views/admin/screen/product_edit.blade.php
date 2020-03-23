@@ -54,7 +54,7 @@
                             <label class="col-sm-2  control-label"></label>
                             <div class="col-sm-8">
                                 <b>{{ $language->name }}</b>
-                                {!! sc_image_render($language->icon,'20px','20px') !!}
+                                {!! sc_image_render($language->icon,'20px','20px', $language->name) !!}
                             </div>
                         </div>
 
@@ -319,28 +319,28 @@
                         {{-- //Brand --}}
 @endif
 
-@if (sc_config('product_vendor'))
-                        {{-- Vendor --}}
-                        <div class="form-group  {{ $errors->has('vendor_id') ? ' has-error' : '' }}">
-                            <label for="vendor_id" class="col-sm-2 control-label">{{ trans('product.vendor') }}</label>
+@if (sc_config('product_supplier'))
+                        {{-- Supplier --}}
+                        <div class="form-group  {{ $errors->has('supplier_id') ? ' has-error' : '' }}">
+                            <label for="supplier_id" class="col-sm-2 control-label">{{ trans('product.supplier') }}</label>
                             <div class="col-sm-8">
-                                <select class="form-control input-sm vendor_id select2" style="width: 100%;"
-                                    name="vendor_id">
+                                <select class="form-control input-sm supplier_id select2" style="width: 100%;"
+                                    name="supplier_id">
                                     <option value=""></option>
-                                    @foreach ($vendors as $k => $v)
+                                    @foreach ($suppliers as $k => $v)
                                     <option value="{{ $k }}"
-                                        {{ (old('vendor_id') ==$k || (!old() && $product->vendor_id ==$k) ) ? 'selected':'' }}>
+                                        {{ (old('supplier_id') ==$k || (!old() && $product->supplier_id ==$k) ) ? 'selected':'' }}>
                                         {{ $v->name }}</option>
                                     @endforeach
                                 </select>
-                                @if ($errors->has('vendor_id'))
+                                @if ($errors->has('supplier_id'))
                                 <span class="help-block">
-                                    <i class="fa fa-info-circle"></i> {{ $errors->first('vendor_id') }}
+                                    <i class="fa fa-info-circle"></i> {{ $errors->first('supplier_id') }}
                                 </span>
                                 @endif
                             </div>
                         </div>
-                        {{-- //Vendor --}}
+                        {{-- //Supplier --}}
 @endif
 
 @if (sc_config('product_cost'))
@@ -400,7 +400,7 @@
                                         <span class="input-group-addon"><i class="fa fa-pencil fa-fw"></i></span>
                                         <input type="number" style="width: 100px;" id="price_promotion"
                                             name="price_promotion"
-                                            value="{!! old('price_promotion',$product->promotionPrice->price_promotion) !!}"
+                                            value="{!! old('price_promotion',$product->promotionPrice->price_promotion ?? '') !!}"
                                             class="form-control input-sm price_promotion" placeholder="" />
                                         <span title="Remove" class="btn btn-flat btn-sm btn-danger removePromotion"><i
                                                 class="fa fa-times"></i></span>
@@ -414,7 +414,7 @@
                                                         class="fa fa-calendar fa-fw"></i></span>
                                                 <input type="text" style="width: 100px;" id="price_promotion_start"
                                                     name="price_promotion_start"
-                                                    value="{!!old('price_promotion_start',$product->promotionPrice->date_start)!!}"
+                                                    value="{!!old('price_promotion_start',$product->promotionPrice->date_start ?? '')!!}"
                                                     class="form-control input-sm price_promotion_start date_time"
                                                     placeholder="" />
                                             </div>
@@ -427,7 +427,7 @@
                                                         class="fa fa-calendar fa-fw"></i></span>
                                                 <input type="text" style="width: 100px;" id="price_promotion_end"
                                                     name="price_promotion_end"
-                                                    value="{!!old('price_promotion_end',$product->promotionPrice->date_end)!!}"
+                                                    value="{!!old('price_promotion_end',$product->promotionPrice->date_end ?? '')!!}"
                                                     class="form-control input-sm price_promotion_end date_time"
                                                     placeholder="" />
                                             </div>
@@ -568,9 +568,9 @@
                             <label for="status" class="col-sm-2  control-label">{{ trans('product.status') }}</label>
                             <div class="col-sm-8">
                                 @if (old())
-                                <input type="checkbox" name="status" {{ old('status',$product['status'])?'checked':''}}>
+                                <input class="input" type="checkbox" name="status" {{ old('status',$product['status'])?'checked':''}}>
                                 @else
-                                <input type="checkbox" name="status" checked>
+                                <input class="input" type="checkbox" name="status" checked>
                                 @endif
 
                             </div>
@@ -791,11 +791,6 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 {{-- input image --}}
 {{-- <link rel="stylesheet" href="{{ asset('admin/plugin/fileinput.min.css')}}"> --}}
@@ -803,22 +798,16 @@
 @endpush
 
 @push('scripts')
-<!--ckeditor-->
-<script src="{{ asset('packages/ckeditor/ckeditor.js') }}"></script>
-<script src="{{ asset('packages/ckeditor/adapters/jquery.js') }}"></script>
+@include('admin.component.ckeditor_js')
 
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+
 
 {{-- input image --}}
 {{-- <script src="{{ asset('admin/plugin/fileinput.min.js')}}"></script> --}}
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
+
+
 
 <script type="text/javascript">
     // Promotion

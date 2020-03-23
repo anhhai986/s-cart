@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" href="{{ asset('images/icon.png') }}" type="image/png" sizes="16x16">
   <title>{{sc_config('ADMIN_TITLE')}} | {{ $title??'' }}</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
@@ -24,11 +25,15 @@
   <link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/bootstrap-daterangepicker/daterangepicker.css')}}">
   <!-- bootstrap wysihtml5 - text editor -->
   <link rel="stylesheet" href="{{ asset('admin/AdminLTE/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css')}}">
-  <link rel="stylesheet" href="{{ asset('admin/css/css.css')}}">
+  <link rel="stylesheet" href="{{ asset('admin/css/css.css')}}?v={{ filemtime('admin/css/css.css') }}">
 
 @endif
 
 
+<!-- Select2 -->
+<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
+{{-- switch --}}
+<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
   @stack('styles')
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -60,7 +65,7 @@
         <section class="content-header">
            <h1>
               <i class="{{ $icon??'' }}" aria-hidden="true"></i> {!! $title??'' !!}
-              <small>{!!$sub_title??'' !!}</small>
+              <small>{!!$subTitle??'' !!}</small>
            </h1>
            <div class="more_info">{!! $more_info??'' !!}</div>
            <!-- breadcrumb start -->
@@ -124,10 +129,26 @@
 <script src="{{ asset('admin/AdminLTE/dist/js/adminlte.min.js')}}"></script>
 {{-- sweetalert2 --}}
 <script src="{{ asset('admin/plugin/sweetalert2.all.min.js')}}"></script>
-<script src="{{ asset('admin/plugin/promise-polyfill.js')}}"></script>
+{{-- <script src="{{ asset('admin/plugin/promise-polyfill.js')}}"></script> --}}
+
+<!-- Select2 -->
+<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+{{-- switch --}}
+<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 @endif
 
 @stack('scripts')
+<script>
+  $(function () {
+    $('.input').iCheck({
+      checkboxClass: 'icheckbox_square-blue',
+      radioClass: 'iradio_square-blue',
+      increaseArea: '20%' /* optional */
+    });
+  });
+  
+</script>
+
 @include('admin.component.script')
 @include('admin.component.alerts')
 

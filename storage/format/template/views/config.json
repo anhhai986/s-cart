@@ -1,0 +1,11 @@
+/*
+Format template for S-Cart 4.x
+*/
+{
+    "name": "Template name",
+    "image": "Image path",
+    "auth": "Your name",
+    "email": "Your email",
+    "website": "Your link",
+    "version": "1.0.0"
+}

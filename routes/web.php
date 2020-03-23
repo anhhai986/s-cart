@@ -1,5 +1,4 @@
 <?php
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -46,9 +45,9 @@ require_once 'component/category.php';
 require_once 'component/brand.php';
 
 /*
- Vendor
+ Supplier
 */
-require_once 'component/vendor.php';
+require_once 'component/supplier.php';
 
 /*
  Product
@@ -78,7 +77,7 @@ Route::get('/banner/{id}', 'ShopFront@clickBanner')
 
 
 //--Please keep 2 lines route (pages + pageNotFound) at the bottom
-Route::get('/{alias}'.$suffix, 'ContentFront@pages')->name('pages');
+Route::get('/{alias}'.$suffix, 'ShopFront@pageDetail')->name('page.detail');
 // Route::fallback('ShopFront@pageNotFound')->name('pageNotFound'); //Make sure before using this route. There will be disadvantages when detecting 404 errors for static files like images, scripts ..
 //--end keep
 

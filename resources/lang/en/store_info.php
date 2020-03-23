@@ -17,6 +17,7 @@ return [
     'site_status' => 'ON/OFF website',
     'template' => 'Template',
     'maintain_content' => 'Maintain content',
+    'maintain_manager' => 'Maintain manager',
     'attribute_name' => 'Attribute name',
     'attribute_value' => 'Attribute value',
     'admin' => [

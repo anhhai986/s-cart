@@ -16,23 +16,21 @@ class UsersController extends Controller
     {
         $data = [
             'title' => trans('user.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_user.delete'),
+            'removeList' => 1, // 1 - Enable function delete list item
+            'buttonRefresh' => 1, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
-            'check_row' => '',
             'id' => trans('user.id'),
             'username' => trans('user.user_name'),
             'name' => trans('user.name'),
@@ -81,7 +79,6 @@ class UsersController extends Controller
                 }
             }
             $dataTr[] = [
-                'check_row' => '<input type="checkbox" class="grid-row-checkbox" data-id="' . $row['id'] . '">',
                 'id' => $row['id'],
                 'username' => $row['username'],
                 'name' => $row['name'],
@@ -98,60 +95,26 @@ class UsersController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('user.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                    <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button> &nbsp;
+        $data['resultItems'] = trans('user.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-                    <a class="btn   btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> ' . trans('admin.delete') . '</span></a> &nbsp;
-
-                    <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('admin.refresh') . '</span></a> &nbsp;</div>
-                    ';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '
-                        <div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_user.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_user.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
-                           </a>
-                        </div>
+                           </a>';
+//=menuRight
 
-                        ';
-//=menu_right
-
-//menu_sort
-
+//menuSort
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
+        $data['urlSort'] = route('admin_user.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_user.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//menuSearch
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_user.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -164,9 +127,8 @@ class UsersController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
+//=menuSearch
 
-        $data['url_delete_item'] = route('admin_user.delete');
 
         return view('admin.screen.list')
             ->with($data);
@@ -180,7 +142,7 @@ class UsersController extends Controller
     {
         $data = [
             'title' => trans('user.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('user.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'user' => [],
@@ -204,9 +166,10 @@ class UsersController extends Controller
         $dataOrigin = request()->all();
         $validator = Validator::make($dataOrigin, [
             'name' => 'required|string|max:100',
-            'username' => 'required|regex:/(^([0-9A-Za-z@\._]+)$)/|unique:admin_user,username|string|max:100|min:3',
+            'username' => 'required|regex:/(^([0-9A-Za-z@\._]+)$)/|unique:'.SC_DB_PREFIX.'admin_user,username|string|max:100|min:3',
             'avatar' => 'nullable|string|max:255',
             'password' => 'required|string|max:60|min:6|confirmed',
+            'email' => 'required|string|email|max:255|unique:'.SC_DB_PREFIX.'admin_user,email',
         ], [
             'username.regex' => trans('user.username_validate'),
         ]);
@@ -221,6 +184,7 @@ class UsersController extends Controller
             'name' => $data['name'],
             'username' => strtolower($data['username']),
             'avatar' => $data['avatar'],
+            'email' => strtolower($data['email']),
             'password' => bcrypt($data['password']),
         ];
 
@@ -252,7 +216,7 @@ class UsersController extends Controller
         }
         $data = [
             'title' => trans('user.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'user' => $user,
@@ -274,9 +238,10 @@ class UsersController extends Controller
         $dataOrigin = request()->all();
         $validator = Validator::make($dataOrigin, [
             'name' => 'required|string|max:100',
-            'username' => 'required|regex:/(^([0-9A-Za-z@\._]+)$)/|unique:admin_user,username,' . $user->id . '|string|max:100|min:3',
+            'username' => 'required|regex:/(^([0-9A-Za-z@\._]+)$)/|unique:'.SC_DB_PREFIX.'admin_user,username,' . $user->id . '|string|max:100|min:3',
             'avatar' => 'nullable|string|max:255',
             'password' => 'nullable|string|max:60|min:6|confirmed',
+            'email' => 'required|string|email|max:255|unique:'.SC_DB_PREFIX.'admin_user,email,' . $user->id,
         ], [
             'username.regex' => trans('user.username_validate'),
         ]);
@@ -292,23 +257,28 @@ class UsersController extends Controller
             'name' => $data['name'],
             'username' => strtolower($data['username']),
             'avatar' => $data['avatar'],
+            'email' => strtolower($data['email']),
         ];
         if ($data['password']) {
             $dataUpdate['password'] = bcrypt($data['password']);
         }
         AdminUser::updateInfo($dataUpdate, $id);
-        $roles = $data['roles'] ?? [];
-        $permission = $data['permission'] ?? [];
-        $user->roles()->detach();
-        $user->permissions()->detach();
-        //Insert roles
-        if ($roles) {
-            $user->roles()->attach($roles);
+
+        if(!in_array($user->id, SC_GUARD_ADMIN)) {
+            $roles = $data['roles'] ?? [];
+            $permission = $data['permission'] ?? [];
+            $user->roles()->detach();
+            $user->permissions()->detach();
+            //Insert roles
+            if ($roles) {
+                $user->roles()->attach($roles);
+            }
+            //Insert permission
+            if ($permission) {
+                $user->permissions()->attach($permission);
+            }
         }
-        //Insert permission
-        if ($permission) {
-            $user->permissions()->attach($permission);
-        }
+
 
 //
         return redirect()->route('admin_user.index')->with('success', trans('user.admin.edit_success'));

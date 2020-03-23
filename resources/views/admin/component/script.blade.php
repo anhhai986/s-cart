@@ -94,4 +94,45 @@ $(function(){
     function LA() {}
     LA.token = "{{ csrf_token() }}";
 
+    function alertJs(type,msg) {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+      });
+      Toast.fire({
+        type: type,
+        title: msg
+      })
+    }
+
+    function alertMsg(title, msg, type) {
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn btn-success',
+          cancelButton: 'btn btn-danger'
+        },
+        buttonsStyling: true,
+      });
+      swalWithBootstrapButtons.fire(
+        title,
+        msg,
+        type
+      )
+    }
+
+    function alertConfirm(type,msg) {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+      });
+      Toast.fire({
+        type: type,
+        title: msg
+      })
+    }
+    
 </script>

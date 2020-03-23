@@ -457,7 +457,7 @@ class Cart
      */
     private function getTableName()
     {
-        return 'shop_shoppingcart';
+        return SC_DB_PREFIX.'shop_shoppingcart';
     }
 
 
@@ -491,7 +491,7 @@ class Cart
                     'showPrice' => $product->showPrice(),
                     'url' => $product->getUrl(),
                     'rowId' => $item->rowId,
-                    'name' => $product->getName(),
+                    'name' => $product->name,
                 ];
             }
         }

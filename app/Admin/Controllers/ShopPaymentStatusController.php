@@ -20,19 +20,18 @@ class ShopPaymentStatusController extends Controller
 
         $data = [
             'title' => trans('payment_status.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_payment_status.delete'),
+            'removeList' => 0, // 1 - Enable function delete list item
+            'buttonRefresh' => 0, // 1 - Enable button refresh
+            'buttonSort' => 0, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
@@ -60,23 +59,14 @@ class ShopPaymentStatusController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('payment_status.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
+        $data['resultItems'] = trans('payment_status.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                      <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('payment_status.admin.refresh') . '</span></a> &nbsp;
-                      </div>';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '<div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_payment_status.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_payment_status.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('payment_status.admin.add_new') . '</span>
-                           </a>
-                        </div>';
-//=menu_right
+                           </a>';
+//=menuRight
 
-        $data['url_delete_item'] = route('admin_payment_status.delete');
 
         return view('admin.screen.list')
             ->with($data);
@@ -90,7 +80,7 @@ class ShopPaymentStatusController extends Controller
     {
         $data = [
             'title' => trans('payment_status.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('payment_status.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'obj' => [],
@@ -140,7 +130,7 @@ class ShopPaymentStatusController extends Controller
         }
         $data = [
             'title' => trans('payment_status.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'obj' => $obj,

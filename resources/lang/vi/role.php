@@ -25,7 +25,7 @@ return [
         'refresh'           => 'Làm mới',
         'select_permission' => 'Chọn quyền hạn',
         'select_user'       => 'Chọn người dùng',
-        'result_item'       => 'Showing <b>:item_from</b> to <b>:item_to</b> of <b>:item_total</b> items</b>',
+        'result_item'       => 'Hiển thị <b>:item_from</b> tới <b>:item_to</b> trong số <b>:item_total</b> kết quả</b>',
         'sort'              => 'Sắp xếp',
         'sort_order'        => [
             'id_asc'    => 'ID asc',

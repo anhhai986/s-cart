@@ -53,6 +53,25 @@ function sc_image_upload($fileContent, $path = null, $name = null, $options = ['
 }
 
 /**
+ * Remove file
+ *
+ * @param   [string]  $disk  
+ * @param   [string]  $path  
+ * @param   [string]  $prefix  will remove
+ *
+ */
+function sc_remove_file($pathFile, $prefix = null,  $disk = null) {
+    if($prefix) {
+        $pathFile = str_replace($prefix,'', $pathFile);
+    }
+    if($disk) {
+        return Storage::disk($disk)->delete($pathFile);
+    } else {
+        return Storage::delete($pathFile);
+    }
+}
+
+/**
  * Function insert watermark
  */
 function sc_image_insert_watermark($pathFile)

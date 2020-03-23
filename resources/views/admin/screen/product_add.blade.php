@@ -91,7 +91,7 @@
                             <label class="col-sm-2 control-label"></label>
                             <div class="col-sm-8">
                                 <b>{{ $language->name }}</b>
-                                {!! sc_image_render($language->icon,'20px','20px') !!}
+                                {!! sc_image_render($language->icon,'20px','20px', $language->name) !!}
                             </div>
                         </div>
 
@@ -350,28 +350,28 @@
 @endif
 
 
-@if (sc_config('product_vendor'))
-                        {{-- select vendor --}}
-                        <div class="form-group  kind kind0 kind1  {{ $errors->has('vendor_id') ? ' has-error' : '' }}">
-                            <label for="vendor_id"
-                                class="col-sm-2  control-label">{{ trans('product.vendor') }}</label>
+@if (sc_config('product_supplier'))
+                        {{-- select supplier --}}
+                        <div class="form-group  kind kind0 kind1  {{ $errors->has('supplier_id') ? ' has-error' : '' }}">
+                            <label for="supplier_id"
+                                class="col-sm-2  control-label">{{ trans('product.supplier') }}</label>
                             <div class="col-sm-8">
-                                <select class="form-control input-sm vendor_id select2" style="width: 100%;"
-                                    name="vendor_id">
+                                <select class="form-control input-sm supplier_id select2" style="width: 100%;"
+                                    name="supplier_id">
                                     <option value=""></option>
-                                    @foreach ($vendors as $k => $v)
-                                    <option value="{{ $k }}" {{ (old('vendor_id') ==$k) ? 'selected':'' }}>
+                                    @foreach ($suppliers as $k => $v)
+                                    <option value="{{ $k }}" {{ (old('supplier_id') ==$k) ? 'selected':'' }}>
                                         {{ $v->name }}</option>
                                     @endforeach
                                 </select>
-                                @if ($errors->has('vendor_id'))
+                                @if ($errors->has('supplier_id'))
                                 <span class="help-block">
-                                    <i class="fa fa-info-circle"></i> {{ $errors->first('vendor_id') }}
+                                    <i class="fa fa-info-circle"></i> {{ $errors->first('supplier_id') }}
                                 </span>
                                 @endif
                             </div>
                         </div>
-                        {{--// select vendor --}}
+                        {{--// select supplier --}}
 @endif
 
 @if (sc_config('product_cost'))
@@ -580,9 +580,9 @@
                             <label for="status" class="col-sm-2  control-label">{{ trans('product.status') }}</label>
                             <div class="col-sm-8">
                                 @if (old())
-                                <input type="checkbox" name="status" {{ ((old('status') ==='on')?'checked':'')}}>
+                                <input class="input" type="checkbox" name="status" {{ ((old('status') ==='on')?'checked':'')}}>
                                 @else
-                                <input type="checkbox" name="status" checked>
+                                <input class="input" type="checkbox" name="status" checked>
                                 @endif
 
                             </div>
@@ -752,11 +752,6 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 {{-- input image --}}
 {{-- <link rel="stylesheet" href="{{ asset('admin/plugin/fileinput.min.css')}}"> --}}
@@ -764,23 +759,17 @@
 @endpush
 
 @push('scripts')
-<!--ckeditor-->
-<script src="{{ asset('packages/ckeditor/ckeditor.js') }}"></script>
-<script src="{{ asset('packages/ckeditor/adapters/jquery.js') }}"></script>
+@include('admin.component.ckeditor_js')
 
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+
 
 {{-- input image --}}
 {{-- <script src="{{ asset('admin/plugin/fileinput.min.js')}}"></script> --}}
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
+
+
 
 <script type="text/javascript">
     // Promotion

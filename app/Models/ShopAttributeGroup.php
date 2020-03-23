@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class ShopAttributeGroup extends Model
 {
     public $timestamps        = false;
-    public $table             = 'shop_attribute_group';
+    public $table = SC_DB_PREFIX.'shop_attribute_group';
     protected $guarded        = [];
     protected static $getList = null;
+    protected $connection = SC_CONNECTION;
 
     public static function getList()
     {

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AdminMenu extends Model
 {
-    public $table = 'admin_menu';
+    public $table = SC_DB_PREFIX.'admin_menu';
     protected $guarded = [];
     private static $getList = null;
 
@@ -18,7 +18,7 @@ class AdminMenu extends Model
      */
     public function roles()
     {
-        return $this->belongsToMany(AdminRole::class, 'admin_role_menu', 'menu_id', 'role_id');
+        return $this->belongsToMany(AdminRole::class, SC_DB_PREFIX.'admin_role_menu', 'menu_id', 'role_id');
     }
 
     /**
@@ -28,7 +28,7 @@ class AdminMenu extends Model
      */
     public function permissions()
     {
-        return $this->belongsToMany(AdminPermission::class, 'admin_menu_permission', 'menu_id', 'permission_id');
+        return $this->belongsToMany(AdminPermission::class, SC_DB_PREFIX.'admin_menu_permission', 'menu_id', 'permission_id');
     }
 
     public static function getList()
@@ -104,14 +104,14 @@ Re-sort menu
     public function reSort(array $data)
     {
         try {
-            DB::connection('mysql')->beginTransaction();
+            DB::connection(SC_CONNECTION)->beginTransaction();
             foreach ($data as $key => $menu) {
                 $this->where('id', $key)->update($menu);
             }
-            DB::connection('mysql')->commit();
+            DB::connection(SC_CONNECTION)->commit();
             $return = ['error' => 0, 'msg' => ""];
         } catch (\Exception $e) {
-            DB::connection('mysql')->rollBack();
+            DB::connection(SC_CONNECTION)->rollBack();
             $return = ['error' => 1, 'msg' => $e->getMessage()];
         }
         return $return;

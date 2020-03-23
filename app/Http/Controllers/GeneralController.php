@@ -5,6 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\ShopSubscribe;
 use Illuminate\Http\Request;
+use App\Models\ShopProduct;
+use App\Models\ShopCategory;
+use App\Models\ShopBanner;
+use App\Models\ShopBrand;
+use App\Models\ShopSupplier;
+use App\Models\ShopNews;
+use App\Models\ShopPage;
+use App\Models\ShopUser;
+use App\Models\ShopOrder;
 
 class GeneralController extends Controller
 {
@@ -24,32 +33,19 @@ class GeneralController extends Controller
         view()->share('layoutsUrl', $layoutsUrl);
         view()->share('templatePath', $this->templatePath);
         view()->share('templateFile', $this->templateFile);
+
+        //variable model
+        view()->share('modelProduct', (new ShopProduct));
+        view()->share('modelCategory', (new ShopCategory));
+        view()->share('modelBanner', (new ShopBanner));
+        view()->share('modelBrand', (new ShopBrand));
+        view()->share('modelSupplier', (new ShopSupplier));
+        view()->share('modelNews', (new ShopNews));
+        view()->share('modelPage', (new ShopPage));
+        view()->share('modelUserProfile', (new ShopUser)->profile());
+        view()->share('modelUserOrder', (new ShopOrder)->profile());
     }
 
-    /**
-     * Process email subscribe
-     * @param  Request $request [description]
-     * @return [type]           [description]
-     */
-    public function emailShop(Request $request)
-    {
-        $data = $request->all();
-        $validator = $request->validate(
-            ['subscribe_email' => 'required|email'], 
-            [
-            'subscribe_email.required' => trans('validation.required'),
-            'subscribe_email.email' => trans('validation.email'),
-            ]
-        );
-
-        $checkEmail = ShopSubscribe::where('email', $data['subscribe_email'])
-            ->first();
-        if (!$checkEmail) {
-            ShopSubscribe::insert(['email' => $data['subscribe_email']]);
-        }
-        return redirect()->back()
-            ->with(['message' => trans('front.subscribe.subscribe_success')]);
-    }
 
     /**
      * Default page not found
@@ -61,7 +57,7 @@ class GeneralController extends Controller
         return view(
             $this->templatePath . '.notfound',
             [
-            'title' => '404 - Page not found',
+            'title' => trans('front.page_not_found_title'),
             'msg' => trans('front.page_not_found'),
             'description' => '',
             'keyword' => ''
@@ -72,14 +68,14 @@ class GeneralController extends Controller
     /**
      * Default item not found
      *
-     * @return  [type]  [return description]
+     * @return  [view]
      */
     public function itemNotFound()
     {
         return view(
             $this->templatePath . '.notfound',
             [
-                'title' => '404 - Item not found',
+                'title' => trans('front.item_not_found_title'),
                 'msg' => trans('front.item_not_found'),
                 'description' => '',
                 'keyword' => '',

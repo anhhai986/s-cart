@@ -29,7 +29,7 @@
           @if ($level0->type ==1)
             <li class="dd-item" data-id="{{ $level0->id }}">
                 <div class="dd-handle header-fix">
-                  {{ sc_language_render($level0->title) }}
+                  {!! sc_language_render($level0->title) !!}
                   <span class="pull-right dd-nodrag">
                       <a href="{{ route('admin_menu.edit',['id'=>$level0->id]) }}"><i class="fa fa-edit"></i></a>
                       <a data-id="{{ $level0->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -39,7 +39,7 @@
           @elseif($level0->uri)
             <li class="dd-item" data-id="{{ $level0->id }}">
                 <div class="dd-handle">
-                  <i class="fa {{ $level0->icon }}"></i> {{ sc_language_render($level0->title) }}
+                  <i class="fa {{ $level0->icon }}"></i> {!! sc_language_render($level0->title) !!}
                   <span class="pull-right dd-nodrag">
                       <a href="{{ route('admin_menu.edit',['id'=>$level0->id]) }}"><i class="fa fa-edit"></i></a>
                       <a data-id="{{ $level0->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -49,7 +49,7 @@
           @else
             <li class="dd-item" data-id="{{ $level0->id }}">
               <div class="dd-handle">
-                <i class="fa {{ $level0->icon }}"></i> {{ sc_language_render($level0->title) }}
+                <i class="fa {{ $level0->icon }}"></i> {!! sc_language_render($level0->title) !!}
                   <span class="pull-right dd-nodrag">
                       <a href="{{ route('admin_menu.edit',['id'=>$level0->id]) }}"><i class="fa fa-edit"></i></a>
                       <a data-id="{{ $level0->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -62,7 +62,7 @@
                   @if($level1->uri)
                     <li class="dd-item" data-id="{{ $level1->id }}">
                         <div class="dd-handle">
-                          <i class="fa {{ $level1->icon }}"></i> {{ sc_language_render($level1->title) }}
+                          <i class="fa {{ $level1->icon }}"></i> {!! sc_language_render($level1->title) !!}
                           <span class="pull-right dd-nodrag">
                               <a href="{{ route('admin_menu.edit',['id'=>$level1->id]) }}"><i class="fa fa-edit"></i></a>
                               <a data-id="{{ $level1->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -72,7 +72,7 @@
                   @else
                   <li class="dd-item" data-id="{{ $level1->id }}">
                     <div class="dd-handle">
-                      <i class="fa {{ $level1->icon }}"></i> {{ sc_language_render($level1->title) }}
+                      <i class="fa {{ $level1->icon }}"></i> {!! sc_language_render($level1->title) !!}
                       <span class="pull-right dd-nodrag">
                           <a href="{{ route('admin_menu.edit',['id'=>$level1->id]) }}"><i class="fa fa-edit"></i></a>
                           <a data-id="{{ $level1->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -85,7 +85,7 @@
                               @if($level2->uri)
                                 <li class="dd-item" data-id="{{ $level2->id }}">
                                     <div class="dd-handle">
-                                      <i class="fa {{ $level2->icon }}"></i> {{ sc_language_render($level2->title) }}
+                                      <i class="fa {{ $level2->icon }}"></i> {!! sc_language_render($level2->title) !!}
                                       <span class="pull-right dd-nodrag">
                                           <a href="{{ route('admin_menu.edit',['id'=>$level2->id]) }}"><i class="fa fa-edit"></i></a>
                                           <a data-id="{{ $level2->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -95,7 +95,7 @@
                               @else
                               <li class="dd-item" data-id="{{ $level2->id }}">
                                 <div class="dd-handle">
-                                  <i class="fa {{ $level2->icon }}"></i> {{ sc_language_render($level2->title) }}
+                                  <i class="fa {{ $level2->icon }}"></i> {!! sc_language_render($level2->title) !!}
                                   <span class="pull-right dd-nodrag">
                                       <a href="{{ route('admin_menu.edit',['id'=>$level2->id]) }}"><i class="fa fa-edit"></i></a>
                                       <a data-id="{{ $level2->id }}" class="remove_menu"><i class="fa fa-trash"></i></a>
@@ -322,8 +322,6 @@
 <!-- Ediable -->
 <link rel="stylesheet" href="{{ asset('admin/plugin/nestable/jquery.nestable.min.css')}}">
 <link rel="stylesheet" href="{{ asset('admin/plugin/iconpicker/fontawesome-iconpicker.min.css')}}">
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
 
 <style type="text/css">
   .header-fix,.header-fix:hover{
@@ -345,8 +343,7 @@
 
 <script src="{{ asset('admin/plugin/nestable/jquery.nestable.min.js')}}"></script>
 <script src="{{ asset('admin/plugin/iconpicker/fontawesome-iconpicker.min.js')}}"></script>
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+
 
 <script type="text/javascript">
 $('.remove_menu').click(function(event) {
@@ -360,20 +357,20 @@ $('.remove_menu').click(function(event) {
   })
 
   swalWithBootstrapButtons.fire({
-    title: 'Are you sure to delete this item ?',
+    title: '{{ trans('admin.confirm_delete') }}',
     text: "",
     type: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
+    confirmButtonText: '{{ trans('admin.confirm_delete_yes') }}',
     confirmButtonColor: "#DD6B55",
-    cancelButtonText: 'No, cancel!',
+    cancelButtonText: '{{ trans('admin.confirm_delete_no') }}',
     reverseButtons: true,
 
     preConfirm: function() {
         return new Promise(function(resolve) {
             $.ajax({
                 method: 'post',
-                url: '{{ $url_delete_item }}',
+                url: '{{ $urlDeleteItem ?? '' }}',
                 data: {
                   id:id,
                     _token: '{{ csrf_token() }}',
@@ -398,8 +395,8 @@ $('.remove_menu').click(function(event) {
   }).then((result) => {
     if (result.value) {
       swalWithBootstrapButtons.fire(
-        'Deleted!',
-        'Item has been deleted.',
+        '{{ trans('admin.confirm_delete_deleted') }}',
+        '{{ trans('admin.confirm_delete_deleted_msg') }}',
         'success'
       )
     } else if (

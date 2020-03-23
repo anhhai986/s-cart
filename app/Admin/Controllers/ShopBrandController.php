@@ -15,19 +15,18 @@ class ShopBrandController extends Controller
 
         $data = [
             'title' => trans('brand.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_brand.delete'),
+            'removeList' => 0, // 1 - Enable function delete list item
+            'buttonRefresh' => 0, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
@@ -68,7 +67,7 @@ class ShopBrandController extends Controller
             $dataTr[] = [
                 'id' => $row['id'],
                 'name' => $row['name'],
-                'image' => sc_image_render($row->getThumb(), '50px'),
+                'image' => sc_image_render($row->getThumb(), '50px','',$row['name']),
                 'url' => $row['url'],
                 'sort' => $row['sort'],
                 'status' => $row['status'] ? '<span class="label label-success">ON</span>' : '<span class="label label-danger">OFF</span>',
@@ -83,54 +82,25 @@ class ShopBrandController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('brand.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
+        $data['resultItems'] = trans('brand.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                      <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('brand.admin.refresh') . '</span></a> &nbsp;
-                      </div>';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '<div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_brand.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_brand.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('brand.admin.add_new') . '</span>
-                           </a>
-                        </div>';
-//=menu_right
+                           </a>';
+//=menuRight
 
-//menu_sort
-
+//menuSort        
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
+        $data['urlSort'] = route('admin_brand.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
-
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_brand.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//menuSearch        
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_brand.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -143,9 +113,7 @@ class ShopBrandController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
-
-        $data['url_delete_item'] = route('admin_brand.delete');
+//=menuSearch
 
         return view('admin.screen.list')
             ->with($data);
@@ -159,7 +127,7 @@ class ShopBrandController extends Controller
     {
         $data = [
             'title' => trans('brand.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('brand.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'brand' => [],
@@ -183,7 +151,7 @@ class ShopBrandController extends Controller
 
         $validator = Validator::make($data, [
             'name' => 'required|string|max:100',
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_brand,alias|string|max:100',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_brand,alias|string|max:100',
             'image' => 'required',
             'sort' => 'numeric|min:0',
             'url' => 'url|nullable',
@@ -222,7 +190,7 @@ class ShopBrandController extends Controller
         }
         $data = [
             'title' => trans('brand.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'brand' => $brand,
@@ -245,7 +213,7 @@ class ShopBrandController extends Controller
 
         $validator = Validator::make($data, [
             'name' => 'required|string|max:100',
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_brand,alias,' . $brand->id . ',id|string|max:100',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_brand,alias,' . $brand->id . ',id|string|max:100',
             'image' => 'required',
             'sort' => 'numeric|min:0',
         ], [

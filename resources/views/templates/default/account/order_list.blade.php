@@ -1,4 +1,12 @@
-@extends($templatePath.'.shop_layout')
+@php
+/*
+$layout_page = shop_profile
+$statusOrder
+*/ 
+$orders = $modelUserOrder->start()->getData();
+@endphp
+
+@extends($templatePath.'.layout')
 
 @section('main')
 <section >
@@ -26,7 +34,6 @@
         @php
             $n = (isset($n)?$n:0);
             $n++;
-            // $order = App\Models\ShopProduct::find($item->id);
         @endphp
     <tr>
         <td><span class="item_21_id">{{ $n }}</span></td>

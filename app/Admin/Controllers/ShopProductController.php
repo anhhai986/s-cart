@@ -13,7 +13,7 @@ use App\Models\ShopProductBuild;
 use App\Models\ShopProductDescription;
 use App\Models\ShopProductGroup;
 use App\Models\ShopProductImage;
-use App\Models\ShopVendor;
+use App\Models\ShopSupplier;
 use Illuminate\Http\Request;
 use Validator;
 
@@ -48,23 +48,21 @@ class ShopProductController extends Controller
     {
         $data = [
             'title' => trans('product.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_product.delete'),
+            'removeList' => 1, // Enable function delete list item
+            'buttonRefresh' => 1, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
-            'check_row' => '',
             'id' => trans('product.id'),
             'image' => trans('product.image'),
             'sku' => trans('product.sku'),
@@ -89,30 +87,40 @@ class ShopProductController extends Controller
         $listTh['status'] = trans('product.status');
         $listTh['action'] = trans('product.admin.action');
 
+        $keyword = request('keyword') ?? '';
 
         $sort_order = request('sort_order') ?? 'id_desc';
-        $keyword = request('keyword') ?? '';
+
         $arrSort = [
             'id__desc' => trans('product.admin.sort_order.id_desc'),
             'id__asc' => trans('product.admin.sort_order.id_asc'),
             'name__desc' => trans('product.admin.sort_order.name_desc'),
             'name__asc' => trans('product.admin.sort_order.name_asc'),
         ];
-        $obj = new ShopProduct;
 
-        $obj = $obj
-            ->leftJoin('shop_product_description', 'shop_product_description.product_id', 'shop_product.id')
-            ->where('shop_product_description.lang', sc_get_locale());
+
+        $tableDescription = (new ShopProductDescription)->getTable();
+        $tableProduct = (new ShopProduct)->getTable();
+
+        $obj = (new ShopProduct)
+            ->leftJoin($tableDescription, $tableDescription . '.product_id', $tableProduct . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+
         if ($keyword) {
-            $obj = $obj->whereRaw('(id = ' . (int) $keyword . ' OR shop_product_description.name like "%' . $keyword . '%" )');
+            $obj = $obj->where(function ($sql) use($tableDescription, $tableProduct){
+                $sql->where($tableDescription . '.name', 'like', '%' . $keyword . '%')
+                ->orWhere($tableDescription . '.keyword', 'like', '%' . $keyword . '%')
+                ->orWhere($tableDescription . '.description', 'like', '%' . $keyword . '%')
+                ->orWhere($tableProduct . '.sku', 'like', '%' . $keyword . '%');
+            });
         }
+
         if ($sort_order && array_key_exists($sort_order, $arrSort)) {
             $field = explode('__', $sort_order)[0];
             $sort_field = explode('__', $sort_order)[1];
-            $obj = $obj->orderBy($field, $sort_field);
-
+            $obj = $obj->sort($field, $sort_field);
         } else {
-            $obj = $obj->orderBy('id', 'desc');
+            $obj = $obj->sort('id', 'desc');
         }
         $dataTmp = $obj->paginate(20);
 
@@ -130,13 +138,16 @@ class ShopProductController extends Controller
             } elseif ($row['type'] == SC_PRODUCT_HOT) {
                 $type = '<span class="label label-danger">' . $type . '</span>';
             }
+            $arrName = [];
+            foreach ($row->categories as $category) {
+                $arrName[] = $category->descriptions->groupBy('lang')['vi'][0]->title;
+            }
             $dataMap = [
-                'check_row' => '<input type="checkbox" class="grid-row-checkbox" data-id="' . $row['id'] . '">',
                 'id' => $row['id'],
-                'image' => sc_image_render($row->getThumb(), '50px', '50px'),
+                'image' => sc_image_render($row->getThumb(), '50px', '50px', $row['name']),
                 'sku' => $row['sku'],
                 'name' => $row['name'],
-                'category' => implode('; ', $row->categories->pluck('name')->toArray()),
+                'category' => implode('; ', $arrName),
                 
             ];
             if(sc_config('product_cost')){
@@ -171,75 +182,35 @@ class ShopProductController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('product.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                    <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button> &nbsp;
+        $data['resultItems'] = trans('product.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-                    <a class="btn   btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> ' . trans('admin.delete') . '</span></a> &nbsp;
-
-                    <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('admin.refresh') . '</span></a> &nbsp;</div>
-                    ';
-//=menu_left
-
-//menu_right
-
-        $data['menu_right'] = '
-                        <div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_product.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
-                           <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
-                           </a>
-                        </div>
-                        ';
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_product.create') . '" class="btn btn-success btn-flat" title="New" id="button_create_new">
+        <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
+        </a>';
         if(sc_config('ImportProduct')) {
-            $data['menu_right'] .= '
-            <div class="btn-group pull-right" style="margin-right: 10px">
-            <a href="' . route('admin_import_product.index') . '" class="btn  btn-success  btn-flat" title="New">
+            $data['menuRight'][] = '<a href="' . route('admin_import_product.index') . '" class="btn  btn-success  btn-flat" title="New">
             <i class="fa fa fa-floppy-o"></i> <span class="hidden-xs">' . trans('admin.add_new_multi') . '</span>
-            </a>
-            </div>
-            ';
-            
+            </a>';
         }
+//=menuRight
 
-//=menu_right
-
-//menu_sort
-
+//menuSort        
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
+        $data['optionSort'] = $optionSort;
+        $data['urlSort'] = route('admin_product.index');
+//=menuSort
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
-
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_product.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//topMenuRight
+        $data['topMenuRight'][] ='
                 <form action="' . route('admin_product.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
-                              <i class="fa  fa-search"></i><span class="hidden-xs"> ' . trans('admin.search') . '</span>
+                              <i class="fa  fa-search"></i>
+                              <span class="hidden-xs"> ' . trans('admin.search') . '</span>
                            </a>
                    </div>
                    <div class="btn-group pull-right">
@@ -248,9 +219,7 @@ class ShopProductController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
-
-        $data['url_delete_item'] = route('admin_product.delete');
+//=topMenuRight
 
         return view('admin.screen.list')
             ->with($data);
@@ -262,7 +231,7 @@ class ShopProductController extends Controller
  */
     public function create()
     {
-        $listProductSingle = (new ShopProduct)->getListSigle();
+        $listProductSingle = (new ShopProduct)->getProductSingle()->getData(['keyBy' => 'id'])->toArray();
 
         // html select product group
         $htmlSelectGroup = '<div class="select-product">';
@@ -296,13 +265,13 @@ class ShopProductController extends Controller
 
         $data = [
             'title' => trans('product.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('product.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'languages' => $this->languages,
             'categories' => (new ShopCategory)->getTreeCategories(),
             'brands' => (new ShopBrand)->getList(),
-            'vendors' => (new ShopVendor)->getList(),
+            'suppliers' => (new ShopSupplier)->getList(),
             'types' => $this->types,
             'virtuals' => $this->virtuals,
             'kinds' => $this->kinds,
@@ -342,8 +311,8 @@ class ShopProductController extends Controller
                     'descriptions.*.description' => 'nullable|string|max:100',
                     'descriptions.*.content' => 'required|string',
                     'category' => 'required',
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias|string|max:100',
                 ];
                 $arrMsg = [
                     'descriptions.*.name.required' => trans('validation.required', ['attribute' => trans('product.name')]),
@@ -362,8 +331,8 @@ class ShopProductController extends Controller
                     'descriptions.*.keyword' => 'nullable|string|max:100',
                     'descriptions.*.description' => 'nullable|string|max:100',
                     'category' => 'required',
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias|string|max:100',
                     'productBuild' => 'required',
                     'productBuildQty' => 'required',
 
@@ -380,8 +349,8 @@ class ShopProductController extends Controller
                 $arrValidation = [
                     'kind' => 'required',
                     'productInGroup' => 'required',
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias|string|max:100',
                     'sort' => 'numeric|min:0',
                     'descriptions.*.name' => 'required|string|max:200',
                     'descriptions.*.keyword' => 'nullable|string|max:200',
@@ -418,7 +387,7 @@ class ShopProductController extends Controller
         $subImages = $data['sub_image'] ?? [];
         $dataInsert = [
             'brand_id' => $data['brand_id']??0,
-            'vendor_id' => $data['vendor_id']??0,
+            'supplier_id' => $data['supplier_id']??0,
             'price' => $data['price']??0,
             'sku' => $data['sku'],
             'cost' => $data['cost']??0,
@@ -527,7 +496,7 @@ class ShopProductController extends Controller
             return 'no data';
         }
 
-        $listProductSingle = (new ShopProduct)->getListSigle();
+        $listProductSingle = (new ShopProduct)->getProductSingle()->getData(['keyBy' => 'id'])->toArray();
 
         // html select product group
         $htmlSelectGroup = '<div class="select-product">';
@@ -557,14 +526,14 @@ class ShopProductController extends Controller
 
         $data = [
             'title' => trans('product.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'languages' => $this->languages,
             'product' => $product,
             'categories' => (new ShopCategory)->getTreeCategories(),
             'brands' => (new ShopBrand)->getList(),
-            'vendors' => (new ShopVendor)->getList(),
+            'suppliers' => (new ShopSupplier)->getList(),
             'types' => $this->types,
             'virtuals' => $this->virtuals,
             'kinds' => $this->kinds,
@@ -599,8 +568,8 @@ class ShopProductController extends Controller
                     'descriptions.*.description' => 'nullable|string|max:300',
                     'descriptions.*.content' => 'required|string',
                     'category' => 'required',
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku,' . $product->id . ',id',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias,' . $product->id . ',id|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku,' . $product->id . ',id',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias,' . $product->id . ',id|string|max:100',
                 ];
                 $arrMsg = [
                     'descriptions.*.name.required' => trans('validation.required', ['attribute' => trans('product.name')]),
@@ -617,8 +586,8 @@ class ShopProductController extends Controller
                     'descriptions.*.keyword' => 'nullable|string|max:200',
                     'descriptions.*.description' => 'nullable|string|max:300',
                     'category' => 'required',
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku,' . $product->id . ',id',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias,' . $product->id . ',id|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku,' . $product->id . ',id',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias,' . $product->id . ',id|string|max:100',
                     'productBuild' => 'required',
                     'productBuildQty' => 'required',
                 ];
@@ -632,8 +601,8 @@ class ShopProductController extends Controller
 
             case SC_PRODUCT_GROUP: //product group
                 $arrValidation = [
-                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,sku,' . $product->id . ',id',
-                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_product,alias,' . $product->id . ',id|string|max:100',
+                    'sku' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,sku,' . $product->id . ',id',
+                    'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_product,alias,' . $product->id . ',id|string|max:100',
                     'productInGroup' => 'required',
                     'sort' => 'numeric|min:0',
                     'descriptions.*.name' => 'required|string|max:200',
@@ -669,7 +638,7 @@ class ShopProductController extends Controller
         $dataUpdate = [
             'image' => $data['image'] ?? '',
             'brand_id' => $data['brand_id'] ?? 0,
-            'vendor_id' => $data['vendor_id'] ?? 0,
+            'supplier_id' => $data['supplier_id'] ?? 0,
             'price' => $data['price'] ?? 0,
             'cost' => $data['cost'] ?? 0,
             'stock' => $data['stock'] ?? 0,

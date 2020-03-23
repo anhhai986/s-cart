@@ -2,12 +2,15 @@
 #app/Http/Controller/ShopFront.php
 namespace App\Http\Controllers;
 
-use App\Models\ShopAttributeGroup;
 use App\Models\ShopBrand;
 use App\Models\ShopBanner;
 use App\Models\ShopCategory;
 use App\Models\ShopProduct;
-use App\Models\ShopVendor;
+use App\Models\ShopSupplier;
+use App\Models\ShopEmailTemplate;
+use App\Models\ShopNews;
+use App\Models\ShopPage;
+use App\Models\ShopSubscribe;
 use Illuminate\Http\Request;
 
 class ShopFront extends GeneralController
@@ -17,32 +20,28 @@ class ShopFront extends GeneralController
         parent::__construct();
     }
     /**
-     * [index description]
-     * @return [type] [description]
+     * Home page
+     * @return [view]
      */
-    public function index(Request $request)
+    public function index()
     {
-        return view($this->templatePath . '.shop_home',
+        return view($this->templatePath . '.screen.shop_home',
             array(
-                'products_new' => (new ShopProduct)->getProducts($type = null, $limit = sc_config('product_new'), $opt = null),
-                'products_hot' => (new ShopProduct)->getProducts($type = SC_PRODUCT_HOT, $limit = sc_config('product_hot'), $opt = 'random'),
-                'categories' => (new ShopCategory)->getCategoriesAll($onlyActive = true),
-                'products_build' => (new ShopProduct)->getTopBuild($limit = 4),
-                'products_group' => (new ShopProduct)->getTopGroup($limit = 4),
-                'layout_page' => 'home',
-
+                'title' => sc_store('title'),
+                'keyword' => sc_store('keyword'),
+                'description' => sc_store('description'),
+                'layout_page' => 'shop_home',
             )
         );
     }
 
     /**
-     * [getCategories description]
-     * @param  Request $request [description]
-     * @return [type]           [description]
+     * display list category root (parent = 0)
+     * @return [view]  
      */
-    public function getCategories(Request $request)
+    public function allCategory()
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -56,27 +55,33 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $itemsList = (new ShopCategory)->getCategories($parent = 0, $limit = sc_config('item_list'), $opt = 'paginate', $sortBy, $sortOrder);
-        
-        return view($this->templatePath . '.shop_item_list',
-        array(
-            'title' => trans('front.categories'),
-            'itemsList' => $itemsList,
-            'keyword' => '',
-            'description' => '',
-            'layout_page' => 'item_list',
-            'filter_sort' => $filter_sort,
-        ));
+        $itemsList = (new ShopCategory)
+            ->getCategoryRoot()
+            ->setSort([$sortBy, $sortOrder])
+            ->setPaginate()
+            ->setLimit(sc_config('item_list'))
+            ->getData();
+
+        return view($this->templatePath . '.screen.shop_item_list',
+            array(
+                'title' => trans('front.categories'),
+                'itemsList' => $itemsList,
+                'keyword' => '',
+                'description' => '',
+                'layout_page' => 'item_list',
+                'filter_sort' => $filter_sort,
+            )
+        );
     }
 
-/**
- * [productToCategory description]
- * @param  [string] $alias [description]
- * @return [type]      [description]
- */
-    public function productToCategory($alias)
+    /**
+     * Category detail: list category child + product list
+     * @param  [string] $alias
+     * @return [view]
+     */
+    public function categoryDetail($alias)
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -92,20 +97,31 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $category = (new ShopCategory)->getCategory($id = null, $alias);
+        $category = (new ShopCategory)->getDetail($alias, $type = 'alias');
 
         if ($category) {
-            $products = (new ShopProduct)->getProductsToCategory($category->id, $limit = sc_config('product_list'), $opt = 'paginate', $sortBy, $sortOrder);
-            $itemsList = (new ShopCategory)->getCategories($parent = $category->id);
-            return view($this->templatePath . '.shop_products_list',
+            $products = (new ShopProduct)
+                ->getProductToCategory([$category->id])
+                ->setLimit(sc_config('product_list'))
+                ->setPaginate()
+                ->setSort([$sortBy, $sortOrder])
+                ->getData();
+
+            $itemsList = (new ShopCategory)
+                ->setParent($category->id)
+                ->setLimit(sc_config('item_list'))
+                ->setPaginate()
+                ->getData();
+
+            return view($this->templatePath . '.screen.shop_product_list',
                 array(
-                    'title' => $category->name,
+                    'title' => $category->title,
                     'description' => $category->description,
-                    'keyword' => '',
+                    'keyword' => $category->keyword,
                     'products' => $products,
                     'itemsList' => $itemsList,
                     'layout_page' => 'product_list',
-                    'og_image' => url($category->getImage()),
+                    'og_image' => asset($category->getImage()),
                     'filter_sort' => $filter_sort,
                 )
             );
@@ -115,14 +131,14 @@ class ShopFront extends GeneralController
 
     }
 
-/**
- * All products
- * @param  [type] $key [description]
- * @return [type]      [description]
- */
-    public function allProducts()
+    /**
+     * All products
+     * @param  [type] $key [description]
+     * @return [type]      [description]
+     */
+    public function allProduct()
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -138,9 +154,13 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $products = (new ShopProduct)->getProducts($type = null, $limit = sc_config('product_list'), $opt = 'paginate', $sortBy, $sortOrder);
+        $products = (new ShopProduct)
+            ->setLimit(sc_config('product_list'))
+            ->setPaginate()
+            ->setSort([$sortBy, $sortOrder])
+            ->getData();
         
-        return view($this->templatePath . '.shop_products_list',
+        return view($this->templatePath . '.screen.shop_product_list',
             array(
                 'title' => trans('front.all_product'),
                 'keyword' => '',
@@ -148,18 +168,17 @@ class ShopFront extends GeneralController
                 'products' => $products,
                 'layout_page' => 'product_list',
                 'filter_sort' => $filter_sort,
-            ));
+        ));
     }
 
-/**
- * [productDetail description]
- * @param  [string] $alias
- * @param  [type] $id   [description]
- * @return [type]       [description]
- */
+    /**
+     * product detail
+     * @param  [string] $alias
+     * @return [view]
+     */
     public function productDetail($alias)
     {
-        $product = (new ShopProduct)->getProduct($id = null, $alias);
+        $product = (new ShopProduct)->getDetail($alias, $type = 'alias' );
         if ($product && $product->status && (sc_config('product_display_out_of_stock') || $product->stock > 0)) {
             //Update last view
             $product->view += 1;
@@ -168,67 +187,53 @@ class ShopFront extends GeneralController
             //End last viewed
 
             //Product last view
-            if (!empty(sc_config('LastViewProduct'))) {
                 $arrlastView = empty(\Cookie::get('productsLastView')) ? array() : json_decode(\Cookie::get('productsLastView'), true);
                 $arrlastView[$product->id] = date('Y-m-d H:i:s');
                 arsort($arrlastView);
                 \Cookie::queue('productsLastView', json_encode($arrlastView), (86400 * 30));
-            }
             //End product last view
 
             $categories = $product->categories->keyBy('id')->toArray();
             $arrCategoriId = array_keys($categories);
-            $productsToCategory = (new ShopProduct)->getProductsToCategory($arrCategoriId, $limit = sc_config('product_relation'), $opt = 'random');
-            //Check product available
-            return view($this->templatePath . '.shop_product_detail',
+
+            $productRelation = (new ShopProduct)
+                ->getProductToCategory($arrCategoriId)
+                ->setLimit(sc_config('product_relation'))
+                ->setRandom()
+                ->getData();
+
+            return view($this->templatePath . '.screen.shop_product_detail',
                 array(
                     'title' => $product->name,
                     'description' => $product->description,
-                    'keyword' => '',
+                    'keyword' => $product->keyword,
                     'product' => $product,
-                    'attributesGroup' => ShopAttributeGroup::all()->keyBy('id'),
-                    'productsToCategory' => $productsToCategory,
-                    'og_image' => url($product->getImage()),
+                    'productRelation' => $productRelation,
+                    'og_image' => asset($product->getImage()),
                     'layout_page' => 'product_detail',
                 )
             );
         } else {
             return $this->itemNotFound();
         }
-
     }
-/**
- * Get product info
- * @param  [int] $id [description]
- * @return [json]     [description]
- */
+
+    /**
+     * Get product info
+     * @return [json]
+     */
     public function productInfo()
     {
         $id = request('id') ?? 0;
-        $product = (new ShopProduct)->getProduct($id);
+        $product = (new ShopProduct)->getDetail($id);
         $product['showPrice'] = $product->showPrice();
         $product['brand_name'] = $product->brand->name;
-        $showImages = '
-        <div class="carousel-inner">
-        <div class="view-product item active"  data-slide-number="0">
-            <img src="' . asset($product->getImage()) . '" alt="">
-        </div>';
-
+        $product['image'] = asset($product->getImage());
+        $subImages = [];
         if ($product->images->count()) {
             foreach ($product->images as $key => $image) {
-                $showImages .= '<div class="view-product item"  data-slide-number="' . ($key + 1) . '">
-              <img src="' . asset($image->getImage()) . '" alt="">
-            </div>';
+                $subImages[] = asset($image->getImage());
             }
-        }
-        $showImages .= '</div>';
-        if ($product->images->count()) {
-            $showImages .= '<a class="left item-control" href="#similar-product" data-slide="prev">
-              <i class="fa fa-angle-left"></i>
-              </a>
-              <a class="right item-control" href="#similar-product" data-slide="next">
-              <i class="fa fa-angle-right"></i>
-              </a>';
         }
 
         $availability = '';
@@ -240,20 +245,19 @@ class ShopFront extends GeneralController
             $availability .= trans('product.in_stock');
         }
         $product['availability'] = $availability;
-        $product['showImages'] = $showImages;
         $product['url'] = $product->getUrl();
+        $product['subImages'] = $subImages;
         return response()->json($product);
 
     }
 
-/**
- * [brands description]
- * @param  Request $request [description]
- * @return [type]           [description]
- */
-    public function getBrands(Request $request)
+    /**
+     * get all brand
+     * @return [view]
+     */
+    public function allBrand()
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -269,8 +273,12 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $itemsList = (new ShopBrand)->getBrands($limit = sc_config('item_list'), $opt = 'paginate', $sortBy, $sortOrder);
-        return view($this->templatePath . '.shop_item_list',
+        $itemsList = (new ShopBrand)
+            ->setSort([$sortBy, $sortOrder])
+            ->setPaginate()
+            ->setLimit(sc_config('item_list'))
+            ->getData();
+        return view($this->templatePath . '.screen.shop_item_list',
             array(
                 'title' => trans('front.brands'),
                 'itemsList' => $itemsList,
@@ -278,17 +286,18 @@ class ShopFront extends GeneralController
                 'description' => '',
                 'layout_page' => 'item_list',
                 'filter_sort' => $filter_sort,
-            ));
+            )
+        );
     }
 
-/**
- * [productToBrand description]
- * @param  [string] $alias [description]
- * @return [type]       [description]
- */
-    public function productToBrand($alias)
+    /**
+     * brand detail
+     * @param  [string] $alias
+     * @return [view] 
+     */
+    public function brandDetail($alias)
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -304,15 +313,23 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $brand = ShopBrand::where('alias', $alias)->first();
+        $brand = (new ShopBrand)->getDetail($alias, $type = 'alias');
         if($brand) {
-            return view($this->templatePath . '.shop_products_list',
+            $products = (new ShopProduct)
+            ->getProductToBrand($brand->id)
+            ->setPaginate()
+            ->setLimit(sc_config('product_list'))
+            ->setSort([$sortBy, $sortOrder])
+            ->getData();
+
+            return view($this->templatePath . '.screen.shop_product_list',
                 array(
                     'title' => $brand->name,
-                    'description' => '',
-                    'keyword' => '',
+                    'description' => $brand->description,
+                    'keyword' => $brand->keyword,
                     'layout_page' => 'product_list',
-                    'products' => $brand->getProductsToBrand($brand->id, $limit = sc_config('product_list'), $opt = 'paginate', $sortBy, $sortOrder),
+                    'products' => $products,
+                    'og_image' => asset($brand->getImage()),
                     'filter_sort' => $filter_sort,
                 )
             );
@@ -321,13 +338,13 @@ class ShopFront extends GeneralController
         }
     }
 
-/**
- * [vendors description]
- * @return [type]           [description]
- */
-    public function getVendors()
+    /**
+     * all supplier
+     * @return [view]
+     */
+    public function allSupplier()
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -342,29 +359,32 @@ class ShopFront extends GeneralController
             $sortBy = $filterArr[$filter_sort][0];
             $sortOrder = $filterArr[$filter_sort][1];
         }
+        $itemsList = (new ShopSupplier)
+            ->setSort([$sortBy, $sortOrder])
+            ->setPaginate()
+            ->setLimit(sc_config('item_list'))
+            ->getData();
 
-        $itemsList = (new ShopVendor)->getVendors($limit = sc_config('item_list'), $opt = 'paginate', $sortBy, $sortOrder);
-
-        return view($this->templatePath . '.shop_item_list',
+        return view($this->templatePath . '.screen.shop_item_list',
             array(
-                'title' => trans('front.vendors'),
+                'title' => trans('front.suppliers'),
                 'itemsList' => $itemsList,
                 'keyword' => '',
                 'description' => '',
                 'layout_page' => 'item_list',
                 'filter_sort' => $filter_sort,
-            ));
+            )
+        );
     }
 
-/**
- * [productToVendor description]
- * @param  [string] alias [description]
- * @param  [type] $id   [description]
- * @return [type]       [description]
- */
-    public function productToVendor($alias)
+    /**
+     * supplier detail
+     * @param  [string] alias [description]
+     * @return [view]
+     */
+    public function supplierDetail($alias)
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -380,18 +400,26 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
 
-        $vendor = ShopVendor::where('alias', $alias)->first();
-        if ($vendor) {
-            return view($this->templatePath . '.shop_products_list',
-            array(
-                'title' => $vendor->name,
-                'description' => '',
-                'keyword' => '',
-                'layout_page' => 'product_list',
-                'products' => $vendor->getProductsToVendor($vendor->id, $limit = sc_config('product_list'), $opt = 'paginate', $sortBy, $sortOrder),
-                'filter_sort' => $filter_sort,
-            )
-        );
+        $supplier = (new ShopSupplier)->getDetail($alias, $type = 'alias');
+        if ($supplier) {
+            $products = (new ShopProduct)
+            ->getProductToSupplier($supplier->id)
+            ->setPaginate()
+            ->setLimit(sc_config('product_list'))
+            ->setSort([$sortBy, $sortOrder])
+            ->getData();
+
+            return view($this->templatePath . '.screen.shop_product_list',
+                array(
+                    'title' => $supplier->name,
+                    'description' => $supplier->description,
+                    'keyword' => $supplier->keyword,
+                    'layout_page' => 'product_list',
+                    'products' => $products,
+                    'og_image' => asset($supplier->getImage()),
+                    'filter_sort' => $filter_sort,
+                    )
+            );
         } else {
             return $this->itemNotFound();
         }
@@ -399,14 +427,13 @@ class ShopFront extends GeneralController
 
     }
 
-/**
- * [search description]
- * @param  Request $request [description]
- * @return [type]           [description]
- */
-    public function search(Request $request)
+    /**
+     * search product
+     * @return [view]
+     */
+    public function search()
     {
-        $sortBy = null;
+        $sortBy = 'sort';
         $sortOrder = 'asc';
         $filter_sort = request('filter_sort') ?? '';
         $filterArr = [
@@ -422,13 +449,20 @@ class ShopFront extends GeneralController
             $sortOrder = $filterArr[$filter_sort][1];
         }
         $keyword = request('keyword') ?? '';
-        return view($this->templatePath . '.shop_products_list',
+        $products = (new ShopProduct)->setKeyword($keyword)
+                    ->setSort([$sortBy, $sortOrder])
+                    ->setPaginate()
+                    ->setLimit(sc_config('product_list'))
+                    ->getData();
+
+        return view($this->templatePath . '.screen.shop_product_list',
             array(
                 'title' => trans('front.search') . ': ' . $keyword,
-                'products' => (new ShopProduct)->getSearch($keyword, $limit = sc_config('product_list'), $sortBy, $sortOrder),
+                'products' => $products,
                 'layout_page' => 'product_list',
                 'filter_sort' => $filter_sort,
-            ));
+            )
+        );
     }
 
     /**
@@ -445,6 +479,190 @@ class ShopFront extends GeneralController
             return redirect(url($banner->url??'/'));
         }
         return redirect(url('/'));
+    }
+
+
+
+    /**
+     * form contact
+     * @return [view]
+     */
+    public function getContact()
+    {
+        return view(
+            $this->templatePath . '.screen.shop_contact',
+            array(
+                'title' => trans('front.contact'),
+                'description' => '',
+                'keyword' => '',
+                'layout_page' => 'shop_contact',
+                'og_image' => '',
+            )
+        );
+    }
+
+
+    /**
+     * process contact form
+     * @param  Request $request [description]
+     * @return [mix]
+     */
+    public function postContact(Request $request)
+    {
+        $validator = $request->validate([
+            'name' => 'required',
+            'title' => 'required',
+            'content' => 'required',
+            'email' => 'required|email',
+            'phone' => 'required|regex:/^0[^0][0-9\-]{7,13}$/',
+        ], [
+            'name.required' => trans('validation.required', ['attribute' => trans('front.contact_form.name')]),
+            'content.required' => trans('validation.required', ['attribute' => trans('front.contact_form.content')]),
+            'title.required' => trans('validation.required', ['attribute' => trans('front.contact_form.title')]),
+            'email.required' => trans('validation.required', ['attribute' => trans('front.contact_form.email')]),
+            'email.email' => trans('validation.email', ['attribute' => trans('front.contact_form.email')]),
+            'phone.required' => trans('validation.required', ['attribute' => trans('front.contact_form.phone')]),
+            'phone.regex' => trans('validation.phone', ['attribute' => trans('front.contact_form.phone')]),
+        ]);
+        //Send email
+        $data = $request->all();
+        $data['content'] = str_replace("\n", "<br>", $data['content']);
+
+        if (sc_config('contact_to_admin')) {
+            $checkContent = (new ShopEmailTemplate)
+                ->where('group', 'contact_to_admin')
+                ->where('status', 1)
+                ->first();
+            if ($checkContent) {
+                $content = $checkContent->text;
+                $dataFind = [
+                    '/\{\{\$title\}\}/',
+                    '/\{\{\$name\}\}/',
+                    '/\{\{\$email\}\}/',
+                    '/\{\{\$phone\}\}/',
+                    '/\{\{\$content\}\}/',
+                ];
+                $dataReplace = [
+                    $data['title'],
+                    $data['name'],
+                    $data['email'],
+                    $data['phone'],
+                    $data['content'],
+                ];
+                $content = preg_replace($dataFind, $dataReplace, $content);
+                $data_email = [
+                    'content' => $content,
+                ];
+
+                $config = [
+                    'to' => sc_store('email'),
+                    'replyTo' => $data['email'],
+                    'subject' => $data['title'],
+                ];
+                sc_send_mail($this->templatePath . '.mail.contact_to_admin', $data_email, $config, []);
+            }
+        }
+
+        return redirect()
+            ->route('contact')
+            ->with('success', trans('front.thank_contact'));
+    }
+
+    /**
+     * Render page
+     * @param  [string] $alias
+     */
+    public function pageDetail($alias)
+    {
+        $page = (new ShopPage)->getDetail($alias, $type = 'alias');
+        if ($page) {
+            return view(
+                $this->templatePath . '.screen.shop_page',
+                array(
+                    'title' => $page->title,
+                    'description' => $page->description,
+                    'keyword' => $page->keyword,
+                    'page' => $page,
+                    'og_image' => asset($page->getImage()),
+                    'layout_page' => 'shop_page',
+                )
+            );
+        } else {
+            return $this->pageNotFound();
+        }
+    }
+
+    /**
+     * Render news
+     * @return [type] [description]
+     */
+    public function news()
+    {
+        $news = (new ShopNews)
+            ->setLimit(sc_config('news_list'))
+            ->setPaginate()
+            ->getData();
+
+        return view(
+            $this->templatePath . '.screen.shop_news',
+            array(
+                'title' => trans('front.blog'),
+                'description' => sc_store('description'),
+                'keyword' => sc_store('keyword'),
+                'news' => $news,
+                'layout_page' => 'news_list',
+            )
+        );
+    }
+
+    /**
+     * News detail
+     *
+     * @param   [string]  $alias 
+     *
+     * @return  view
+     */
+    public function newsDetail($alias)
+    {
+        $news = (new ShopNews)->getDetail($alias, $type ='alias');
+        if ($news) {
+            return view(
+                $this->templatePath . '.screen.shop_news_detail',
+                array(
+                    'title' => $news->title,
+                    'news' => $news,
+                    'description' => $news->description,
+                    'keyword' => $news->keyword,
+                    'og_image' => asset($news->getImage()),
+                    'layout_page' => 'news_detail',
+                )
+            );
+        } else {
+            return $this->pageNotFound();
+        }
+    }
+
+    /**
+     * email subscribe
+     * @param  Request $request
+     * @return json
+     */
+    public function emailSubscribe(Request $request)
+    {
+        $validator = $request->validate([
+            'subscribe_email' => 'required|email',
+            ], [
+            'email.required' => trans('validation.required'),
+            'email.email'    => trans('validation.email'),
+        ]);
+        $data       = $request->all();
+        $checkEmail = ShopSubscribe::where('email', $data['subscribe_email'])
+            ->first();
+        if (!$checkEmail) {
+            ShopSubscribe::insert(['email' => $data['subscribe_email']]);
+        }
+        return redirect()->back()
+            ->with(['success' => trans('subscribe.subscribe_success')]);
     }
 
 }

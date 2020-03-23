@@ -32,7 +32,7 @@
                             <label class="col-sm-2  control-label"></label>
                             <div class="col-sm-8">
                                 <b>{{ $language->name }}</b>
-                                {!! sc_image_render($language->icon,'20px','20px') !!}
+                                {!! sc_image_render($language->icon,'20px','20px', $language->name) !!}
                             </div>
                         </div>
 
@@ -201,7 +201,7 @@
                         <div class="form-group  ">
                             <label for="status" class="col-sm-2  control-label">{{ trans('category.status') }}</label>
                             <div class="col-sm-8">
-                                <input type="checkbox" name="status"
+                                <input class="input" type="checkbox" name="status"
                                     {{ old('status',(empty($category['status'])?0:1))?'checked':''}}>
 
                             </div>
@@ -239,24 +239,12 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
 
 <script type="text/javascript">
     $(document).ready(function() {

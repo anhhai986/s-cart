@@ -84,7 +84,7 @@
                                                 <a data-input="icon" data-preview="preview_icon" data-type="language"
                                                     class="btn btn-sm btn-primary lfm">
                                                     <i class="fa fa-picture-o"></i>
-                                                    {{trans('language.admin.choose_icon')}}
+                                                    {{trans('admin.choose_icon')}}
                                                 </a>
                                             </span>
                                         </div>
@@ -96,6 +96,16 @@
                                         <div id="preview_icon" class="img_holder"><img
                                                 src="{{ asset(old('icon',$language['icon']??'')) }}"></div>
                                     </div>
+                                </div>
+
+                                <div class="form-group   {{ $errors->has('rtl') ? ' has-error' : '' }}">
+                                    <label for="rtl"
+                                        class="col-sm-2  control-label">{{ trans('language.layout_rtl') }}</label>
+                                        <div class="col-sm-8">
+                                            <input type="checkbox" name="rtl" {!!
+                                                old('rtl',(empty($language['rtl'])?0:1))?'checked':''!!}>
+    
+                                        </div>
                                 </div>
 
                                 <div class="form-group   {{ $errors->has('sort') ? ' has-error' : '' }}">
@@ -121,7 +131,7 @@
                                     <label for="status"
                                         class="col-sm-2  control-label">{{ trans('language.status') }}</label>
                                     <div class="col-sm-8">
-                                        <input type="checkbox" name="status" {!!
+                                        <input class="input" type="checkbox" name="status" {!!
                                             old('status',(empty($language['status'])?0:1))?'checked':''!!}>
 
                                     </div>
@@ -158,24 +168,12 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
 
 <script type="text/javascript">
     $(document).ready(function() {

@@ -6,6 +6,7 @@ return [
     'code'   => 'Code',
     'sort'   => 'Sắp xếp',
     'status' => 'Status',
+    'layout_rtl' => 'Giao diện RTL',
     'admin'  => [
         'title'          => 'Ngôn ngữ',
         'create_success' => 'Tạo mới thành công!',
@@ -19,7 +20,7 @@ return [
         'add_new'        => 'Thêm mới',
         'export'         => 'Xuất',
         'refresh'        => 'Làm mới',
-        'result_item'    => 'Showing <b>:item_from</b> to <b>:item_to</b> of <b>:item_total</b> items</b>',
+        'result_item'    => 'Hiển thị <b>:item_from</b> tới <b>:item_to</b> trong số <b>:item_total</b> kết quả</b>',
         'sort'           => 'Sắp xếp',
         'search'         => 'Tìm kiếm',
         'add_new_title'  => 'Tạo ngôn ngữ',

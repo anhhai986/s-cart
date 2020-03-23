@@ -1,6 +1,17 @@
-@extends($templatePath.'.shop_layout')
+@php
+/*
+$layout_page = shop_auth
+$token 
+$email
+*/ 
+@endphp
+
+@extends($templatePath.'.layout')
 
 @section('main')
+@if (!empty($invalid))
+    {!! trans('auth.link_reset_invalid') !!}
+@else
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-2">
@@ -63,6 +74,8 @@
         </div>
     </div>
 </div>
+@endif
+
 @endsection
 
 @section('breadcrumb')

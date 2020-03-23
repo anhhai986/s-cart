@@ -117,7 +117,7 @@
                             <td class="product_qty">x <a href="#" class="edit-item-detail" data-value="{{ $item->qty }}" data-name="qty" data-type="number" min=0 data-pk="{{ $item->id }}" data-url="{{ route("admin_order.edit_item") }}" data-title="{{ trans('order.qty') }}"> {{ $item->qty }}</a></td>
                             <td class="product_total item_id_{{ $item->id }}">{{ sc_currency_render_symbol($item->total_price,$order->currency)}}</td>
                             <td>
-                                <button  onclick="deleteItem({{ $item->id }});" class="btn btn-danger btn-xs" data-title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                                <span  onclick="deleteItem({{ $item->id }});" class="btn btn-danger btn-xs" data-title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></span>
                             </td>
                           </tr>
                     @endforeach
@@ -125,11 +125,9 @@
                     <tr  id="add-item" class="not-print">
                       <td colspan="6">
                         <button  type="button" class="btn btn-sm btn-flat btn-success" id="add-item-button"  title="{{trans('product.add_product') }}"><i class="fa fa-plus"></i> {{ trans('product.add_product') }}</button>
-                        &nbsp;&nbsp;&nbsp;<button style="display: none; margin-right: 50px" type="button" class="btn btn-sm btn-flat btn-warning" id="add-item-button-save"  title="Save"><i class="fa fa-save"></i> Save</button>
+                        &nbsp;&nbsp;&nbsp;<button style="display: none; margin-right: 50px" type="button" class="btn btn-sm btn-flat btn-warning" id="add-item-button-save"  title="Save"><i class="fa fa-save"></i> {{ trans('admin.save') }}</button>
                     </td>
                   </tr>
-
-                    </form>
                 </tbody>
               </table>
             </div>
@@ -277,8 +275,6 @@
 </style>
 <!-- Ediable -->
 <link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-editable.css')}}">
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
 @endpush
 
 @push('scripts')
@@ -288,8 +284,7 @@
 <!-- Ediable -->
 <script src="{{ asset('admin/plugin/bootstrap-editable.min.js')}}"></script>
 
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
+
 
 <script type="text/javascript">
 
@@ -326,8 +321,7 @@ function update_total(e){
             beforeSend: function(){
                 $('#loading').show();
             },
-            success: function(result){
-                var returnedData = JSON.parse(result);
+            success: function(returnedData){
                 node.find('.add_sku').val(returnedData.sku);
                 node.find('.add_qty').eq(0).val(1);
                 node.find('.add_price').eq(0).val(returnedData.price_final * {!! ($order->exchange_rate)??1 !!});
@@ -362,7 +356,7 @@ $('#add-item-button-save').click(function(event) {
             if(parseInt(result.error) ==0){
                 location.reload();
             }else{
-                alert(result.msg);
+              alertJs('error', result.msg);
             }
         }
     });
@@ -372,7 +366,6 @@ $('#add-item-button-save').click(function(event) {
 //
 
 $(document).ready(function() {
-
   all_editable();
 });
 
@@ -382,26 +375,50 @@ function all_editable(){
         return params;
     };
 
-    $('.updateInfo').editable({});
+    $('.updateInfo').editable({
+      success: function(response) {
+        if(response.error ==0){
+          alertJs('success', response.msg);
+        } else {
+          alertJs('error', response.msg);
+        }
+    }
+    });
 
     $(".updatePrice").on("shown", function(e, editable) {
       var value = $(this).text().replace(/,/g, "");
       editable.input.$input.val(parseInt(value));
     });
+
     $('.updateStatus').editable({
         validate: function(value) {
             if (value == '') {
-                return '{{  trans('language.admin.not_empty') }}';
+                return '{{  trans('admin.not_empty') }}';
             }
-        }
+        },
+        success: function(response) {
+          if(response.error ==0){
+            alertJs('success', response.msg);
+          } else {
+            alertJs('error', response.msg);
+          }
+      }
     });
 
     $('.updateInfoRequired').editable({
         validate: function(value) {
             if (value == '') {
-                return '{{  trans('language.admin.not_empty') }}';
+                return '{{  trans('admin.not_empty') }}';
             }
-        }
+        },
+        success: function(response,newValue) {
+          console.log(response.msg);
+          if(response.error == 0){
+            alertJs('success', response.msg);
+          } else {
+            alertJs('error', response.msg);
+          }
+      }
     });
 
 
@@ -412,25 +429,27 @@ function all_editable(){
         },
         validate: function(value) {
           if (value == '') {
-              return '{{  trans('language.admin.not_empty') }}';
+              return '{{  trans('admin.not_empty') }}';
           }
           if (!$.isNumeric(value)) {
-              return '{{  trans('language.admin.only_numeric') }}';
+              return '{{  trans('admin.only_numeric') }}';
           }
         },
         success: function(response,newValue) {
-            var rs = response;
-            if(rs.error ==0){
-                $('.data-shipping').html(rs.msg.shipping);
-                $('.data-received').html(rs.msg.received);
-                $('.data-subtotal').html(rs.msg.subtotal);
-                $('.data-total').html(rs.msg.total);
-                $('.data-shipping').html(rs.msg.shipping);
-                $('.data-discount').html(rs.msg.discount);
-                $('.item_id_'+rs.msg.item_id).html(rs.msg.item_total_price);
+            if(response.error ==0){
+                $('.data-shipping').html(response.detail.shipping);
+                $('.data-received').html(response.detail.received);
+                $('.data-subtotal').html(response.detail.subtotal);
+                $('.data-total').html(response.detail.total);
+                $('.data-shipping').html(response.detail.shipping);
+                $('.data-discount').html(response.detail.discount);
+                $('.item_id_'+response.detail.item_id).html(response.detail.item_total_price);
                 var objblance = $('.data-balance').eq(0);
-                objblance.before(rs.msg.balance);
+                objblance.before(response.detail.balance);
                 objblance.remove();
+                alertJs('success', response.msg);
+            } else {
+              alertJs('error', response.msg);
             }
         }
 
@@ -443,27 +462,27 @@ function all_editable(){
         },
         validate: function(value) {
           if (value == '') {
-              return '{{  trans('language.admin.not_empty') }}';
+              return '{{  trans('admin.not_empty') }}';
           }
           if (!$.isNumeric(value)) {
-              return '{{  trans('language.admin.only_numeric') }}';
+              return '{{  trans('admin.only_numeric') }}';
           }
        },
 
         success: function(response, newValue) {
-              // console.log(response);
-              var rs = response;
-              if(rs.error ==0){
-                  $('.data-shipping').html(rs.msg.shipping);
-                  $('.data-received').html(rs.msg.received);
-                  $('.data-subtotal').html(rs.msg.subtotal);
-                  $('.data-total').html(rs.msg.total);
-                  $('.data-shipping').html(rs.msg.shipping);
-                  $('.data-discount').html(rs.msg.discount);
+              if(response.error ==0){
+                  $('.data-shipping').html(response.detail.shipping);
+                  $('.data-received').html(response.detail.received);
+                  $('.data-subtotal').html(response.detail.subtotal);
+                  $('.data-total').html(response.detail.total);
+                  $('.data-shipping').html(response.detail.shipping);
+                  $('.data-discount').html(response.detail.discount);
                   var objblance = $('.data-balance').eq(0);
-                  objblance.before(rs.msg.balance);
+                  objblance.before(response.detail.balance);
                   objblance.remove();
-
+                  alertJs('success', response.msg);
+              } else {
+                alertJs('error', response.msg);
               }
       }
     });
@@ -472,35 +491,39 @@ function all_editable(){
 
 {{-- sweetalert2 --}}
 function deleteItem(id){
-  const swalWithBootstrapButtons = Swal.mixin({
+  Swal.mixin({
     customClass: {
       confirmButton: 'btn btn-success',
       cancelButton: 'btn btn-danger'
     },
     buttonsStyling: true,
-  })
-
-  swalWithBootstrapButtons.fire({
-    title: 'Are you sure to delete this item ?',
+  }).fire({
+    title: '{{ trans('admin.confirm_delete') }}',
     text: "",
     type: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
+    confirmButtonText: '{{ trans('admin.confirm_delete_yes') }}',
     confirmButtonColor: "#DD6B55",
-    cancelButtonText: 'No, cancel!',
+    cancelButtonText: '{{ trans('admin.confirm_delete_no') }}',
     reverseButtons: true,
 
     preConfirm: function() {
         return new Promise(function(resolve) {
             $.ajax({
-                method: 'post',
+                method: 'POST',
                 url: '{{ route("admin_order.delete_item") }}',
                 data: {
                   'pId':id,
                     _token: '{{ csrf_token() }}',
                 },
-                success: function (data) {
-                  location.reload();
+                success: function (response) {
+                  if(response.error ==0){
+                    location.reload();
+                    alertJs('success', response.msg);
+                } else {
+                  alertJs('error', response.msg);
+                }
+                  
                 }
             });
         });
@@ -508,11 +531,7 @@ function deleteItem(id){
 
   }).then((result) => {
     if (result.value) {
-      swalWithBootstrapButtons.fire(
-        'Deleted!',
-        'Item has been deleted.',
-        'success'
-      )
+      alertMsg('{{ trans('admin.confirm_delete_deleted') }}', '{{ trans('admin.confirm_delete_deleted_msg') }}', 'success');
     } else if (
       // Read more about handling dismissals
       result.dismiss === Swal.DismissReason.cancel
@@ -536,12 +555,11 @@ function deleteItem(id){
 
   });
 
-    function order_print(){
-      $('.not-print').hide();
-      window.print();
-      $('.not-print').show();
-    }
-
+  function order_print(){
+    $('.not-print').hide();
+    window.print();
+    $('.not-print').show();
+  }
 </script>
 
 @endpush

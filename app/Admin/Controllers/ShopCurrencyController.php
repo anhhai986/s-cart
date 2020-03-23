@@ -15,19 +15,18 @@ class ShopCurrencyController extends Controller
 
         $data = [
             'title' => trans('currency.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_currency.delete'),
+            'removeList' => 0, // 1 - Enable function delete list item
+            'buttonRefresh' => 0, // 1 - Enable button refresh
+            'buttonSort' => 0, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
@@ -53,7 +52,7 @@ class ShopCurrencyController extends Controller
         ];
         $obj = new ShopCurrency;
         if ($keyword) {
-            $obj = $obj->whereRaw('(code = "' . $keyword . '% OR name like "%' . $keyword . '%" )');
+            $obj = $obj->whereRaw('(code = "' . $keyword . '" OR name like "%' . $keyword . '%" )');
         }
 
         if ($sort_order && array_key_exists($sort_order, $arrSort)) {
@@ -89,54 +88,26 @@ class ShopCurrencyController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('currency.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
+        $data['resultItems'] = trans('currency.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                      <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('currency.admin.refresh') . '</span></a> &nbsp;
-                      </div>';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '<div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_currency.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_currency.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('currency.admin.add_new') . '</span>
-                           </a>
-                        </div>';
-//=menu_right
+                           </a>';
+//=menuRight
 
-//menu_sort
-
+//menuSort        
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
+        $data['urlSort'] = route('admin_currency.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_currency.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//menuSearch
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_currency.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -149,9 +120,7 @@ class ShopCurrencyController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
-
-        $data['url_delete_item'] = route('admin_currency.delete');
+//=menuSearch
 
         return view('admin.screen.list')
             ->with($data);
@@ -165,7 +134,7 @@ class ShopCurrencyController extends Controller
     {
         $data = [
             'title' => trans('currency.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('currency.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'currency' => [],
@@ -185,13 +154,13 @@ class ShopCurrencyController extends Controller
         $dataOrigin = request()->all();
         $validator = Validator::make($data, [
             'symbol' => 'required',
-            'exchange_rate' => 'required',
+            'exchange_rate' => 'required|numeric|gt:0',
             'precision' => 'required',
             'symbol_first' => 'required',
             'thousands' => 'required',
             'sort' => 'numeric|min:0',
             'name' => 'required|string|max:100',
-            'code' => 'required|unique:shop_currency,code',
+            'code' => 'required|unique:'.SC_DB_PREFIX.'shop_currency,code',
         ]);
 
         if ($validator->fails()) {
@@ -228,7 +197,7 @@ class ShopCurrencyController extends Controller
         }
         $data = [
             'title' => trans('currency.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'currency' => $currency,
@@ -248,13 +217,13 @@ class ShopCurrencyController extends Controller
         $dataOrigin = request()->all();
         $validator = Validator::make($data, [
             'symbol' => 'required',
-            'exchange_rate' => 'required',
+            'exchange_rate' => 'required|numeric|gt:0',
             'precision' => 'required',
             'symbol_first' => 'required',
             'thousands' => 'required',
             'sort' => 'numeric|min:0',
             'name' => 'required|string|max:100',
-            'code' => 'required|unique:shop_currency,code,' . $currency->id . ',id',
+            'code' => 'required|unique:'.SC_DB_PREFIX.'shop_currency,code,' . $currency->id . ',id',
         ]);
 
         if ($validator->fails()) {

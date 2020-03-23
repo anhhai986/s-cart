@@ -51,6 +51,21 @@
                                 </div>
                             </div>
 
+                            <div class="form-group   {{ $errors->has('email') ? ' has-error' : '' }}">
+                                <label for="email" class="col-sm-2  control-label">{{ trans('user.email') }}</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="fa fa-pencil fa-fw"></i></span>
+                                        <input type="text" disabled=""  id="email"  value="{{ old('email',$user['email']??'') }}" class="form-control email" placeholder="" />
+                                    </div>
+                                        @if ($errors->has('email'))
+                                            <span class="help-block">
+                                                {{ $errors->first('email') }}
+                                            </span>
+                                        @endif
+                                </div>
+                            </div>
+
                             <div class="form-group   {{ $errors->has('avatar') ? ' has-error' : '' }}">
                                 <label for="avatar" class="col-sm-2  control-label">{{ trans('user.avatar') }}</label>
                                 <div class="col-sm-8">
@@ -189,24 +204,11 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
-
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
 
 <script type="text/javascript">
 

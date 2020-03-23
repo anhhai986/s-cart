@@ -55,9 +55,6 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
     'asset_url' => env('ASSET_URL', null),
 
-    //This value will re-define in database with App\Providers\ScartServiceProvider
-    'admin_prefix' => env('ADMIN_PREFIX', 'sc_admin'),
-
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -150,13 +147,13 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        Barryvdh\DomPDF\ServiceProvider::class,
         Barryvdh\Debugbar\ServiceProvider::class,
         /*
          * Package Service Providers...
          */
         UniSharp\LaravelFilemanager\LaravelFilemanagerServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
+        Spatie\JsonApiPaginate\JsonApiPaginateServiceProvider::class,
         /*
          * Application Service Providers...
          */
@@ -164,15 +161,14 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
+
         /*
          * S-Cart
          */
         App\Providers\ScartServiceProvider::class,
-        App\Providers\ExtensionServiceProvider::class,
-        App\Providers\ShoppingCartServiceProvider::class,
         App\Admin\Providers\AdminServiceProvider::class,
 
+        App\Providers\RouteServiceProvider::class,
     ],
 
     /*

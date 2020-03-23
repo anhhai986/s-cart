@@ -64,18 +64,18 @@
            @elseif($config->key == 'smtp_port')
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="number" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="number" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
              </tr>
            @elseif($config->key == 'smtp_password')
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">****</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">****</a></td>
              </tr>
 
           @else
              <tr>
                <td>{{ sc_language_render($config->detail) }}</td>
-               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_store_value.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
+               <td align="left"><a href="#" class="fied-required editable editable-click" data-name="{{ $config->key }}" data-type="text" data-pk="{{ $config->key }}" data-source="" data-url="{{ route('admin_setting.update') }}" data-title="{{ sc_language_render($config->detail) }}" data-value="{!! $config->value !!}" data-original-title="" title="">{!! $config->value !!}</a></td>
              </tr>
            @endif
 
@@ -116,7 +116,7 @@ $(document).ready(function() {
         validate: function(value) {
         },
         success: function(data) {
-          if(data.stt == 1){
+          if(data.error == 0){
             const Toast = Swal.mixin({
               toast: true,
               position: 'top-end',
@@ -196,20 +196,20 @@ $('.grid-trash').on('click', function() {
   })
 
   swalWithBootstrapButtons.fire({
-    title: 'Are you sure to delete this item ?',
+    title: '{{ trans('admin.confirm_delete') }}',
     text: "",
     type: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
+    confirmButtonText: '{{ trans('admin.confirm_delete_yes') }}',
     confirmButtonColor: "#DD6B55",
-    cancelButtonText: 'No, cancel!',
+    cancelButtonText: '{{ trans('admin.confirm_delete_no') }}',
     reverseButtons: true,
 
     preConfirm: function() {
         return new Promise(function(resolve) {
             $.ajax({
                 method: 'post',
-                url: '{{ $url_delete_item }}',
+                url: '{{ $urlDeleteItem ?? '' }}',
                 data: {
                   ids:ids,
                     _token: '{{ csrf_token() }}',
@@ -225,8 +225,8 @@ $('.grid-trash').on('click', function() {
   }).then((result) => {
     if (result.value) {
       swalWithBootstrapButtons.fire(
-        'Deleted!',
-        'Item has been deleted.',
+        '{{ trans('admin.confirm_delete_deleted') }}',
+        '{{ trans('admin.confirm_delete_deleted_msg') }}',
         'success'
       )
     } else if (
@@ -257,13 +257,13 @@ $('.grid-trash').on('click', function() {
     isChecked = (isChecked == false)?0:1;
     var name = $(this).attr('name');
       $.ajax({
-        url: '{{ route('admin_store_value.update') }}',
+        url: '{{ route('admin_setting.update') }}',
         type: 'POST',
         dataType: 'JSON',
         data: {"name": name,"value":isChecked,"_token": "{{ csrf_token() }}",},
       })
       .done(function(data) {
-        if(data.stt == 1){
+        if(data.error == 0){
           if(isChecked == 1 && name == 'email_action_smtp_mode'){
             $('.config_smtp').show();
           }else if(isChecked == 0 && name == 'email_action_smtp_mode'){

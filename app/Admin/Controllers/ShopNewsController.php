@@ -23,22 +23,22 @@ class ShopNewsController extends Controller
     {
         $data = [
             'title' => trans('news.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_news.delete'),
+            'removeList' => 1, // 1 - Enable function delete list item
+            'buttonRefresh' => 0, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
+            'id' => trans('news.id'),
             'title' => trans('news.title'),
             'image' => trans('news.image'),
             'sort' => trans('news.sort'),
@@ -56,10 +56,10 @@ class ShopNewsController extends Controller
         $obj = new ShopNews;
 
         $obj = $obj
-            ->leftJoin('shop_news_description', 'shop_news_description.shop_news_id', 'shop_news.id')
-            ->where('shop_news_description.lang', sc_get_locale());
+            ->leftJoin(SC_DB_PREFIX.'shop_news_description', SC_DB_PREFIX.'shop_news_description.shop_news_id', SC_DB_PREFIX.'shop_news.id')
+            ->where(SC_DB_PREFIX.'shop_news_description.lang', sc_get_locale());
         if ($keyword) {
-            $obj = $obj->whereRaw('(shop_news_description.title like "%' . $keyword . '%" )');
+            $obj = $obj->whereRaw('('.SC_DB_PREFIX.'shop_news_description.title like "%' . $keyword . '%" )');
         }
         if ($sort_order && array_key_exists($sort_order, $arrSort)) {
             $field = explode('__', $sort_order)[0];
@@ -74,8 +74,9 @@ class ShopNewsController extends Controller
         $dataTr = [];
         foreach ($dataTmp as $key => $row) {
             $dataTr[] = [
+                'id' => $row['id'],
                 'title' => $row['title'],
-                'image' => sc_image_render($row['image'], '50px'),
+                'image' => sc_image_render($row['image'], '50px',null,$row['title']),
                 'sort' => $row['sort'],
                 'status' => $row['status'] ? '<span class="label label-success">ON</span>' : '<span class="label label-danger">OFF</span>',
                 'action' => '
@@ -89,60 +90,27 @@ class ShopNewsController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('news.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                    <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button> &nbsp;
+        $data['resultItems'] = trans('news.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-                    <a class="btn   btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> ' . trans('admin.delete') . '</span></a> &nbsp;
 
-                    <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('admin.refresh') . '</span></a> &nbsp;</div>
-                    ';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '
-                        <div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_news.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_news.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
-                           </a>
-                        </div>
+                           </a>';
+//=menuRight
 
-                        ';
-//=menu_right
-
-//menu_sort
-
-        $optionSort = '';
+//menuSort       
+     $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
+        $data['urlSort'] = route('admin_news.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_news.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//menuSearch        
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_news.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -155,9 +123,8 @@ class ShopNewsController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
+//=menuSearch
 
-        $data['url_delete_item'] = route('admin_news.delete');
 
         return view('admin.screen.list')
             ->with($data);
@@ -172,7 +139,7 @@ class ShopNewsController extends Controller
         $shopNews = [];
         $data = [
             'title' => trans('news.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('news.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'languages' => $this->languages,
@@ -200,7 +167,7 @@ class ShopNewsController extends Controller
         $data['alias'] = sc_word_limit($data['alias'], 100);
 
         $validator = Validator::make($data, [
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_news,alias|string|max:100',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_news,alias|string|max:100',
             'descriptions.*.title' => 'required|string|max:200',
             'descriptions.*.keyword' => 'nullable|string|max:200',
             'descriptions.*.description' => 'nullable|string|max:300',
@@ -251,7 +218,7 @@ class ShopNewsController extends Controller
         }
         $data = [
             'title' => trans('news.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'languages' => $this->languages,
@@ -279,7 +246,7 @@ class ShopNewsController extends Controller
             'descriptions.*.title' => 'required|string|max:200',
             'descriptions.*.keyword' => 'nullable|string|max:200',
             'descriptions.*.description' => 'nullable|string|max:300',
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_news,alias,' . $shopNews->id . ',id|string|max:100',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_news,alias,' . $shopNews->id . ',id|string|max:100',
         ], [
             'alias.regex' => trans('news.alias_validate'),
             'descriptions.*.title.required' => trans('validation.required', ['attribute' => trans('news.title')]),

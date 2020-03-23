@@ -1,4 +1,11 @@
-@extends($templatePath.'.shop_layout')
+@php
+/*
+$layout_page = shop_profile
+$user
+*/ 
+@endphp
+
+@extends($templatePath.'.layout')
 
 @section('main')
 <section >

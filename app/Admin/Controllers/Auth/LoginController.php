@@ -76,7 +76,7 @@ class LoginController extends Controller
 
         $request->session()->invalidate();
 
-        return redirect(config('app.admin_prefix'));
+        return redirect(SC_ADMIN_PREFIX);
     }
 
     public function getSetting()
@@ -87,7 +87,7 @@ class LoginController extends Controller
         }
         $data = [
             'title' => trans('admin.setting_account'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'user' => $user,
@@ -152,7 +152,7 @@ class LoginController extends Controller
             return $this->redirectTo();
         }
 
-        return property_exists($this, 'redirectTo') ? $this->redirectTo : config('app.admin_prefix');
+        return property_exists($this, 'redirectTo') ? $this->redirectTo : SC_ADMIN_PREFIX;
     }
 
     /**

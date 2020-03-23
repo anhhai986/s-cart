@@ -108,14 +108,7 @@
                                                 <option value="{!! $view !!}" {{ (old('text',$layout['text']??'') == $view)?'selected':'' }} >{{ $view }}</option>
                                             @endforeach
                                         </select>
-                                        <span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_view') }}</span>
-                                    @elseif ($dataType =='module')
-                                        <select name="text" class="form-control text">
-                                            @foreach ($listModuleBlock as $key => $module)
-                                                <option value="{!! $module !!}" {{ (old('text',$layout['text']??'') == $module)?'selected':'' }} >{{ $module }}</option>
-                                            @endforeach
-                                        </select>
-                                        <span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_module') }}</span>
+                                        <span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_view',['template' => sc_store('template')]) }}</span>
                                     @else
                                         <textarea name="text" class="form-control text" rows="5" placeholder="Layout text">
                                             {!! old('text',$layout['text']??'') !!}
@@ -151,7 +144,7 @@
                             <div class="form-group  ">
                                 <label for="status" class="col-sm-2  control-label">{{ trans('block_content.status') }}</label>
                                 <div class="col-sm-8">
-                                <input type="checkbox" name="status"  {!! old('status',(empty($layout['status'])?0:1))?'checked':''!!}>
+                                <input class="input" type="checkbox" name="status"  {!! old('status',(empty($layout['status'])?0:1))?'checked':''!!}>
 
                                 </div>
                             </div>
@@ -189,24 +182,12 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
 
 <script type="text/javascript">
 
@@ -225,10 +206,7 @@ $(function () {
        obj.before('<textarea name="text" class="form-control text" rows="5" placeholder="Layout text"></textarea><span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_html') }}.</span>');
        obj.remove();
     }else if(type =='view'){
-       obj.before('<select name="text" class="form-control text">@foreach ($listViewBlock as $view)<option value="{{ $view }}">{{ $view }}</option>@endforeach</select><span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_view') }}</span>');
-       obj.remove();
-    }else if(type =='module'){
-       obj.before('<select name="text" class="form-control text">@foreach ($listModuleBlock as $module)<option value="{{ $module }}">{{ $module }}</option>@endforeach</select><span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_module') }}</span>');
+       obj.before('<select name="text" class="form-control text">@foreach ($listViewBlock as $view)<option value="{{ $view }}">{{ $view }}</option>@endforeach</select><span class="help-block"><i class="fa fa-info-circle"></i> {{ trans('block_content.admin.helper_view',['template' => sc_store('template')]) }}</span>');
        obj.remove();
     }
     });

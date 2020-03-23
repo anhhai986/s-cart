@@ -8,7 +8,6 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = include_once __DIR__ . '/../bootstrap/app.php';
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\Artisan;
-
 $kernel   = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
@@ -26,7 +25,12 @@ if (request()->method() == 'POST' && request()->ajax()) {
             $database_name     = request('database_name') ?? '';
             $database_user     = request('database_user') ?? '';
             $database_password = request('database_password') ?? '';
+            $database_prefix   = request('database_prefix') ?? '';
             $admin_url         = request('admin_url') ?? '';
+            $admin_url         = str_replace('/','',strip_tags(strtolower($admin_url)));
+            if (in_array($admin_url, ['','admin','css','data','images','js','packages','templates', 'plugin', 'plugins','vendor','component'])) {
+                $admin_url = 'sc_admin';
+            }
             
         try {
             $api_key = 'base64:' . base64_encode(
@@ -38,12 +42,11 @@ if (request()->method() == 'POST' && request()->ajax()) {
             $getEnv = str_replace('sc_database_port', $database_port, $getEnv);
             $getEnv = str_replace('sc_database_name', $database_name, $getEnv);
             $getEnv = str_replace('sc_database_user', $database_user, $getEnv);
+            $getEnv = str_replace('DB_PREFIX=sc_', 'DB_PREFIX='.$database_prefix, $getEnv);
             $getEnv = str_replace('sc_database_password', $database_password, $getEnv);
             $getEnv = str_replace('sc_api_key', $api_key, $getEnv);
+            $getEnv = str_replace('sc_admin', $admin_url, $getEnv);
 
-            if ($admin_url) {
-                $getEnv = str_replace('sc_admin', $admin_url, $getEnv);
-            }
             $env = fopen(base_path() . "/.env", "w") or die(json_encode(['error' => 1, 'msg' => trans('install.env.error_open')]));
             fwrite($env, $getEnv);
             fclose($env);
@@ -52,12 +55,28 @@ if (request()->method() == 'POST' && request()->ajax()) {
             echo json_encode(['error' => 1, 'msg' => $e->getMessage()]);
             exit();
         }
-            echo json_encode(['error' => 0, 'msg' => trans('install.env.process_sucess')]);
+
+        $infoInstall =  [
+            'timezone_default' => request('timezone_default'),
+            'language_default' => request('language_default'),
+            'admin_user' => request('admin_user'),
+            'admin_password' => bcrypt(request('admin_password')),
+            'admin_email' => request('admin_email'),
+            'admin_url' => $admin_url,
+            'dropdb' => (request('dropdb') =='true')?1:0,
+        ];
+
+            echo json_encode(['error' => 0, 'msg' => trans('install.env.process_sucess'), 'infoInstall' => $infoInstall]);
             break;
 
     case 'step2-1':
+        session(['infoInstall'=> request('infoInstall')]);
+        //Drop table migrations if exist
+        if(!empty(session('infoInstall')['dropdb'])) {
+            \Schema::dropIfExists('migrations');
+        }
         try {
-            Artisan::call('migrate --path=/database/migrations/2020_00_00_step1_create_admin_tables.php');
+            Artisan::call('migrate --path=/database/migrations/2020_00_00_step1_create_tables_admin.php');
         } catch(\Exception $e) {
             echo json_encode([
                 'error' => '1',
@@ -68,12 +87,14 @@ if (request()->method() == 'POST' && request()->ajax()) {
         echo json_encode([
             'error' => '0',
             'msg' => trans('install.database.process_sucess_1'),
+            'infoInstall' => request('infoInstall')
         ]);
         break;
 
         case 'step2-2':
+            session(['infoInstall'=> request('infoInstall')]);
             try {
-                Artisan::call('migrate --path=/database/migrations/2020_00_00_step2_create_shop_tables.php');
+                Artisan::call('migrate --path=/database/migrations/2020_00_00_step2_create_tables_shop.php');
             } catch(\Exception $e) {
                 echo json_encode([
                     'error' => '1',
@@ -84,8 +105,65 @@ if (request()->method() == 'POST' && request()->ajax()) {
             echo json_encode([
                 'error' => '0',
                 'msg' => trans('install.database.process_sucess_2'),
+                'infoInstall' => request('infoInstall')
             ]);
             break;
+
+        case 'step2-3':
+            session(['infoInstall'=> request('infoInstall')]);
+            try {
+                Artisan::call('migrate --path=/database/migrations/2020_00_00_step3_insert_database_admin.php');
+            } catch(\Exception $e) {
+                echo json_encode([
+                    'error' => '1',
+                    'msg' => $e->getMessage(),
+                ]);
+                break;
+            }
+            echo json_encode([
+                'error' => '0',
+                'msg' => trans('install.database.process_sucess_3'),
+                'infoInstall' => request('infoInstall')
+            ]);
+            break;
+
+            case 'step2-4':
+                session(['infoInstall'=> request('infoInstall')]);
+                try {
+                    Artisan::call('migrate --path=/database/migrations/2020_00_00_step4_insert_database_shop.php');
+                } catch(\Exception $e) {
+                    echo json_encode([
+                        'error' => '1',
+                        'msg' => $e->getMessage(),
+                    ]);
+                    break;
+                }
+                session()->forget('infoInstall');
+                echo json_encode([
+                    'error' => '0',
+                    'msg' => trans('install.database.process_sucess_4'),
+                ]);
+                break;
+
+                case 'step2-5':
+                    session(['infoInstall'=> request('infoInstall')]);
+                    try {
+                        Artisan::call('migrate --path=/database/migrations/2020_00_00_step5_insert_database_product.php');
+                        Artisan::call('passport:install');
+                    } catch(\Exception $e) {
+                        echo json_encode([
+                            'error' => '1',
+                            'msg' => $e->getMessage(),
+                        ]);
+                        break;
+                    }
+                    session()->forget('infoInstall');
+                    echo json_encode([
+                        'error' => '0',
+                        'msg' => trans('install.database.process_sucess_5'),
+                    ]);
+                    break;
+
 
     case 'step3':
         try {

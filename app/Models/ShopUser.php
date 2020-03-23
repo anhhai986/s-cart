@@ -5,18 +5,21 @@ namespace App\Models;
 use App\Models\ShopEmailTemplate;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Auth;
+use Laravel\Passport\HasApiTokens;
 
 class ShopUser extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $table = 'shop_user';
+    protected $table = SC_DB_PREFIX.'shop_user';
     protected $guarded = [];
+    protected $connection = SC_CONNECTION;
     private static $getList = null;
     /**
      * The attributes that should be hidden for arrays.
@@ -78,7 +81,7 @@ class ShopUser extends Authenticatable
                 'subject' => trans('email.forgot_password.reset_button'),
             ];
 
-            sc_send_mail('mail.forgot_password', $data, $config, []);
+            sc_send_mail('templates.' . sc_store('template') . '.mail.forgot_password', $data, $config, []);
         }
 
     }
@@ -112,5 +115,9 @@ class ShopUser extends Authenticatable
     {
         $dataUpdate = sc_clean($dataInsert, 'password');
         return self::create($dataUpdate);
+    }
+
+    public function profile() {
+        return Auth::user();
     }
 }

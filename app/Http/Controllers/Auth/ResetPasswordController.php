@@ -6,7 +6,7 @@ use App\Http\Controllers\GeneralController;
 use Auth;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
-
+use App\Models\ShopUserPasswordReset;
 class ResetPasswordController extends GeneralController
 {
     /*
@@ -41,6 +41,14 @@ class ResetPasswordController extends GeneralController
         $this->middleware('guest');
     }
 
+    /**
+     * Form reset password
+     *
+     * @param   Request  $request
+     * @param   [string]   $token
+     *
+     * @return  [view]
+     */
     public function showResetForm(Request $request, $token = null)
     {
         if (Auth::user()) {
@@ -51,8 +59,8 @@ class ResetPasswordController extends GeneralController
                 'title' => trans('front.reset_password'),
                 'token' => $token,
                 'email' => $request->email,
+                'layout_page' => 'shop_auth',
             ]
         );
-
     }
 }

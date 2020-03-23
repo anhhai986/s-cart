@@ -6,21 +6,23 @@ use App\Models\ShopCategoryDescription;
 use App\Models\ShopProduct;
 use Cache;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ModelTrait;
 
 class ShopCategory extends Model
 {
+    use ModelTrait;
+
     public $timestamps = false;
-    public $table = 'shop_category';
+    public $table = SC_DB_PREFIX . 'shop_category';
     protected $guarded = [];
-    public $appends = [
-        'name',
-        'keyword',
-        'description',
-    ];
+    protected $connection = SC_CONNECTION;
+
+    protected  $sc_parent = ''; // category id parent
+    protected  $sc_top = 'all'; // 1 - category display top, 0 -non top, all - all
 
     public function products()
     {
-        return $this->belongsToMany(ShopProduct::class, 'shop_product_category', 'category_id', 'product_id');
+        return $this->belongsToMany(ShopProduct::class, SC_DB_PREFIX . 'shop_product_category', 'category_id', 'product_id');
     }
 
     public function descriptions()
@@ -28,13 +30,12 @@ class ShopCategory extends Model
         return $this->hasMany(ShopCategoryDescription::class, 'category_id', 'id');
     }
 
-/**
- * Get category parent
- */
+    /**
+     * Get category parent
+     */
     public function getParent()
     {
-        return $this->find($this->parent);
-
+        return $this->getDetail($this->parent);
     }
 
     protected static function boot()
@@ -47,207 +48,269 @@ class ShopCategory extends Model
         });
     }
 
-/**
- * [getCategories description]
- * @param  [type] $parent    [description]
- * @param  [type] $limit     [description]
- * @param  [type] $opt       [description]
- * @param  [type] $sortBy    [description]
- * @param  string $sortOrder [description]
- * @return [type]            [description]
- */
-    public function getCategories($parent, $limit = null, $opt = null, $sortBy = null, $sortOrder = 'asc')
-    {
-        $query = $this->where('status', 1)->where('parent', $parent);
-        $query = $query->sort($sortBy, $sortOrder);
-        if (!(int) $limit) {
-            return $query->get();
-        } else
-        if ($opt == 'paginate') {
-            return $query->paginate((int) $limit);
-        } else
-        if ($opt == 'random') {
-            return $query->inRandomOrder()->limit($limit)->get();
-        } else {
-            return $query->limit($limit)->get();
-        }
 
-    }
-
-/**
- * Get all ID category children of parent
- * @param  integer $parent     [description]
- * @param  [type]  &$arrayID      [description]
- * @param  [object]  $categories [description]
- * @return [array]              [description]
- */
-    public function getIdCategories($parent = 0, &$arrayID = null, $categories = null)
+    /**
+     * Get all ID category children of parent
+     * @param  integer $parent     [description]
+     * @param  [type]  &$arrayID      [description]
+     * @param  [object]  $categories [description]
+     * @return [array]              [description]
+     */
+    public function getIdCategories($parent = 0, &$arrayID = [], $categories = [])
     {
-        $categories = $categories ?? $this->getCategoriesAll();
+        $categories = $categories ?? $this->getList();
         $arrayID = $arrayID ?? [];
         $lisCategory = $categories[$parent] ?? [];
         if (count($lisCategory)) {
             foreach ($lisCategory as $category) {
-                $arrayID[] = $category->id;
-                if (!empty($categories[$category->id])) {
-                    $this->getIdCategories($category->id, $arrayID, $categories);
+                $arrayID[] = $category['id'];
+                if (!empty($categories[$category['id']])) {
+                    $this->getIdCategories($category['id'], $arrayID, $categories);
                 }
             }
         }
         return $arrayID;
     }
 
-    public function getTreeCategories($parent = 0, &$tree = null, $categories = null, &$st = '')
+    /**
+     * Get tree categories
+     *
+     * @param   [type]  $parent      [$parent description]
+     * @param   [type]  &$tree       [&$tree description]
+     * @param   [type]  $categories  [$categories description]
+     * @param   [type]  &$st         [&$st description]
+     *
+     * @return  [type]               [return description]
+     */
+    public function getTreeCategories($parent = 0, &$tree = [], $categories = null, &$st = '')
     {
-        $categories = $categories ?? $this->getCategoriesAll();
+        $categories = $categories ?? $this->getList();
         $tree = $tree ?? [];
         $lisCategory = $categories[$parent] ?? [];
-        foreach ($lisCategory as $category) {
-            $tree[$category->id] = $st . $category->name;
-            if (!empty($categories[$category->id])) {
-                $st .= '--';
-                $this->getTreeCategories($category->id, $tree, $categories, $st);
-                $st = '';
+        if ($lisCategory) {
+            foreach ($lisCategory as $category) {
+                $tree[$category['id']] = $st . $category['title'];
+                if (!empty($categories[$category['id']])) {
+                    $st .= '--';
+                    $this->getTreeCategories($category['id'], $tree, $categories, $st);
+                    $st = '';
+                }
             }
         }
-
         return $tree;
     }
 
-/**
- * [getCategoriesTop description]
- * @return [type] [description]
- */
-    public function getCategoriesTop()
-    {
-        return $this->where('status', 1)->where('top', 1)->get();
-    }
-
-/*
-Get thumb
- */
+    /*
+    *Get thumb
+    */
     public function getThumb()
     {
         return sc_image_get_path_thumb($this->image);
     }
 
-/*
-Get image
- */
+    /*
+    *Get image
+    */
     public function getImage()
     {
         return sc_image_get_path($this->image);
-
     }
 
     public function getUrl()
     {
-        return route('category', ['alias' => $this->alias]);
+        return route('category.detail', ['alias' => $this->alias]);
     }
 
-//Fields language
-    public function getName()
-    {
-        return $this->processDescriptions()['name'] ?? '';
-    }
-    public function getKeyword()
-    {
-        return $this->processDescriptions()['keyword'] ?? '';
-    }
-    public function getDescription()
-    {
-        return $this->processDescriptions()['description'] ?? '';
-    }
-
-//Attributes
-    public function getNameAttribute()
-    {
-        return $this->getName();
-    }
-    public function getKeywordAttribute()
-    {
-        return $this->getKeyword();
-
-    }
-    public function getDescriptionAttribute()
-    {
-        return $this->getDescription();
-
-    }
-
-//Scort
+    //Scort
     public function scopeSort($query, $sortBy = null, $sortOrder = 'desc')
     {
         $sortBy = $sortBy ?? 'sort';
         return $query->orderBy($sortBy, $sortOrder);
     }
 
-    public function processDescriptions()
+    /**
+     * Get list category
+     *
+     * @param   array  $arrOpt
+     * Example: ['status' => 1, 'top' => 1]
+     * @param   array  $arrSort
+     * Example: ['sortBy' => 'id', 'sortOrder' => 'asc']
+     * @param   array  $arrLimit  [$arrLimit description]
+     * Example: ['step' => 0, 'limit' => 20]
+     * @return  [type]             [return description]
+     */
+    public function getList($arrOpt = [], $arrSort = [], $arrLimit = [])
     {
-        return $this->descriptions->keyBy('lang')[sc_get_locale()] ?? [];
+        $tableDescription = (new ShopCategoryDescription)->getTable();
+
+        $sortBy = $arrSort['sortBy'] ?? null;
+        $sortOrder = $arrSort['sortOrder'] ?? 'asc';
+        $step = $arrLimit['step'] ?? 0;
+        $limit = $arrLimit['limit'] ?? 0;
+
+        $data = $this
+            ->leftJoin($tableDescription, $tableDescription . '.category_id', $this->getTable() . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+
+        $data = $data->sort($sortBy, $sortOrder);
+        if(count($arrOpt = [])) {
+            foreach ($arrOpt as $key => $value) {
+                $data = $data->where($key, $value);
+            }
+        }
+        if((int)$limit) {
+            $start = $step * $limit;
+            $data = $data->offset((int)$start)->limit((int)$limit);
+        }
+        $data = $data->get()->groupBy('parent');
+
+        return $data;
     }
 
-    public function getCategoriesAll($onlyActive = false, $sortBy = null, $sortOrder = 'asc')
+    /**
+     * Process list full cactegory
+     *
+     * @return  [type]  [return description]
+     */
+    public static function getListFull()
     {
-        if (sc_config('cache_status')) {
-            if (!Cache::has('all_cate_' . $onlyActive . $sortBy . $sortOrder)) {
+        if(sc_config('cache_status') && sc_config('cache_category')) {
+            if (!Cache::has('cache_category')) {
+                Cache::put('cache_category', self::get()->keyBy('id')->toJson(), $seconds = sc_config('cache_time', 0)?:600);
+            }
+            return Cache::get('cache_category');
+        } else {
+            return  self::get()->keyBy('id')->toJson();
+        }
+    }
 
-                if ($onlyActive) {
-                    $listFullCategory = $this->getCategoriesActive($sortBy = null, $sortOrder = 'asc');
-                } else {
-                    $listFullCategory = $this->getCategoriesFull($sortBy = null, $sortOrder = 'asc');
+
+    /**
+     * Get categoy detail
+     *
+     * @param   [string]  $key     [$key description]
+     * @param   [string]  $type  [id, alias]
+     *
+     */
+    public function getDetail($key, $type = null, $status = 1)
+    {
+        if(empty($key)) {
+            return null;
+        }
+        $tableDescription = (new ShopCategoryDescription)->getTable();
+        $category = $this
+            ->leftJoin($tableDescription, $tableDescription . '.category_id', $this->getTable() . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+        if ($type == null) {
+            $category = $category->where('id', (int) $key);
+        } else {
+            $category = $category->where($type, $key);
+        }
+        if ($status == 1) {
+            $category = $category->where('status', 1);
+        }
+        return $category->first();
+    }
+
+
+    /**
+     * Start new process get data
+     *
+     * @return  new model
+     */
+    public function start() {
+        return new ShopCategory;
+    }
+
+    /**
+     * Set category parent
+     */
+    public function setParent($parent) {
+        $this->sc_parent = (int)$parent;
+        return $this;
+    }
+
+    /**
+     * Set top value
+     */
+    private function setTop($top) {
+        if ($top === 'all') {
+            $this->sc_top = $top;
+        } else {
+            $this->sc_top = (int)$top ? 1 : 0;
+        }
+        return $this;
+    }
+
+    /**
+     * Category root
+     */
+    public function getCategoryRoot() {
+        $this->setParent(0);
+        $this->setStatus(1);
+        return $this;
+    }
+
+    /**
+     * Category top
+     */
+    public function getCategoryTop() {
+        $this->setTop(1);
+        $this->setStatus(1);
+        return $this;
+    }
+
+    /**
+     * build Query
+     */
+    public function buildQuery() {
+        $tableDescription = (new ShopCategoryDescription)->getTable();
+
+        //description
+        $query = $this
+            ->leftJoin($tableDescription, $tableDescription . '.category_id', $this->getTable() . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+        //search keyword
+        if ($this->sc_keyword !='') {
+            $query = $query->where(function ($sql) use($tableDescription){
+                $sql->where($tableDescription . '.title', 'like', '%' . $this->sc_keyword . '%')
+                ->orWhere($tableDescription . '.keyword', 'like', '%' . $this->sc_keyword . '%')
+                ->orWhere($tableDescription . '.description', 'like', '%' . $this->sc_keyword . '%');
+            });
+        }
+
+        if ($this->sc_status !== 'all') {
+            $query = $query->where('status', $this->sc_status);
+        }
+
+        if ($this->sc_parent !== '') {
+            $query = $query->where('parent', $this->sc_parent);
+        }
+
+        if ($this->sc_top !== 'all') {
+            $query = $query->where('top', $this->sc_top);
+        }
+
+        if (count($this->sc_moreWhere)) {
+            foreach ($this->sc_moreWhere as $key => $where) {
+                if(count($where)) {
+                    $query = $query->where($where[0], $where[1], $where[2]);
                 }
-                Cache::put('all_cate_' . $onlyActive . $sortBy . $sortOrder, $listFullCategory, $seconds = sc_config('cache_time', 600));
             }
-            return Cache::get('all_cate_' . $onlyActive . $sortBy . $sortOrder);
-        } else {
-            if ($onlyActive) {
-                $listFullCategory = $this->getCategoriesActive($sortBy = null, $sortOrder = 'asc');
-            } else {
-                $listFullCategory = $this->getCategoriesFull($sortBy = null, $sortOrder = 'asc');
-            }
-            return $listFullCategory;
         }
 
-    }
-
-    public function getCategoriesActive($sortBy = null, $sortOrder = 'asc')
-    {
-        $lang = sc_get_locale();
-        $listFullCategory = $this->where('status', 1)
-            ->sort($sortBy, $sortOrder)
-            ->get()
-            ->groupBy('parent');
-        return $listFullCategory;
-    }
-
-    public function getCategoriesFull($sortBy = null, $sortOrder = 'asc')
-    {
-        $lang = sc_get_locale();
-        $listFullCategory = $this->sort($sortBy, $sortOrder)
-            ->get()
-            ->groupBy('parent');
-        return $listFullCategory;
-    }
-
-/**
- * [getCategory description]
- *
- * @param   [int]  $id     [$id description]
- * @param   [string]  $alias  [$alias description]
- *
- * @return  [type]          [return description]
- */
-    public function getCategory($id = null, $alias = null) {
-        $category = null;
-        if($id) {
-            $category = $this->where('id', (int)$id);
+        if ($this->sc_random) {
+            $query = $query->inRandomOrder();
         } else {
-            $category = $this->where('alias', $alias);
+            if (is_array($this->sc_sort) && count($this->sc_sort)) {
+                foreach ($this->sc_sort as  $rowSort) {
+                    if(is_array($rowSort) && count($rowSort) == 2) {
+                        $query = $query->sort($rowSort[0], $rowSort[1]);
+                    }
+                }
+            }
         }
-        return $category
-            ->where('status', 1)
-            ->first();
-    }
 
+        return $query;
+    }
 }

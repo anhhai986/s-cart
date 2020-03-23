@@ -46,23 +46,21 @@ class ShopOrderController extends Controller
 
         $data = [
             'title' => trans('order.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_order.delete'),
+            'removeList' => 1, // 1 - Enable function delete list item
+            'buttonRefresh' => 1, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
-            'check_row' => '',
             'id' => trans('order.admin.id'),
             'email' => trans('order.admin.email'),
             'subtotal' => trans('order.admin.subtotal'),
@@ -110,7 +108,6 @@ class ShopOrderController extends Controller
         $dataTr = [];
         foreach ($dataTmp as $key => $row) {
             $dataTr[] = [
-                'check_row' => '<input type="checkbox" class="grid-row-checkbox" data-id="' . $row['id'] . '">',
                 'id' => $row['id'],
                 'email' => $row['email'] ?? 'N/A',
                 'subtotal' => sc_currency_render_symbol($row['subtotal'] ?? 0, $row['currency']),
@@ -132,64 +129,31 @@ class ShopOrderController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('order.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                    <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button> &nbsp;
+        $data['resultItems'] = trans('order.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-                    <a class="btn   btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> ' . trans('admin.delete') . '</span></a> &nbsp;
 
-                    <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('admin.refresh') . '</span></a> &nbsp;</div>
-                    ';
-//=menu_left
-
-//menu_right
-        $data['menu_right'] = '
-                        <div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_order.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_order.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
                            <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
-                           </a>
-                        </div>
+                           </a>';
+//=menuRight
 
-                        ';
-//=menu_right
-
-//menu_sort
-
+//menuSort        
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
+        $data['urlSort'] = route('admin_order.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_order.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
+//menuSearch        
         $optionStatus = '';
         foreach ($this->statusOrder as $key => $status) {
             $optionStatus .= '<option  ' . (($order_status == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
-        $data['menu_search'] = '
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_order.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -211,9 +175,8 @@ class ShopOrderController extends Controller
                         </div>
                     </div>
                 </form>';
-//=menu_search
+//=menuSearch
 
-        $data['url_delete_item'] = route('admin_order.delete');
 
         return view('admin.screen.list')
             ->with($data);
@@ -227,15 +190,15 @@ class ShopOrderController extends Controller
     {
         $data = [
             'title' => trans('order.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('order.admin.add_new_des'),
             'icon' => 'fa fa-plus',
         ];
-        $paymentMethodTmp = sc_get_extension('payment', $onlyActive = false);
+        $paymentMethodTmp = sc_get_plugin_installed('payment', $onlyActive = false);
         foreach ($paymentMethodTmp as $key => $value) {
             $paymentMethod[$key] = sc_language_render($value->detail);
         }
-        $shippingMethodTmp = sc_get_extension('shipping', $onlyActive = false);
+        $shippingMethodTmp = sc_get_plugin_installed('shipping', $onlyActive = false);
         foreach ($shippingMethodTmp as $key => $value) {
             $shippingMethod[$key] = trans($value->detail);
         }
@@ -343,18 +306,18 @@ class ShopOrderController extends Controller
             return 'no data';
         }
         $products = ShopProduct::getArrayProductName();
-        $paymentMethodTmp = sc_get_extension('payment', $onlyActive = false);
+        $paymentMethodTmp = sc_get_plugin_installed('payment', $onlyActive = false);
         foreach ($paymentMethodTmp as $key => $value) {
             $paymentMethod[$key] = sc_language_render($value->detail);
         }
-        $shippingMethodTmp = sc_get_extension('shipping', $onlyActive = false);
+        $shippingMethodTmp = sc_get_plugin_installed('shipping', $onlyActive = false);
         foreach ($shippingMethodTmp as $key => $value) {
             $shippingMethod[$key] = sc_language_render($value->detail);
         }
         return view('admin.screen.order_edit')->with(
             [
                 "title" => trans('order.order_detail'),
-                "sub_title" => '',
+                "subTitle" => '',
                 'icon' => 'fa fa-file-text-o',
                 "order" => $order,
                 "products" => $products,
@@ -391,14 +354,14 @@ class ShopOrderController extends Controller
         $id = request('id');
         $sku = request('sku');
         if ($id) {
-            $product = ShopProduct::find($id);
+            $product = (new ShopProduct)->getDetail($id);
         } else {
-            $product = ShopProduct::where('sku', $sku)->first();
+            $product = (new ShopProduct)->getDetail('sku', $type = 'sku');
         }
         $arrayReturn = $product->toArray();
         $arrayReturn['renderAttDetails'] = $product->renderAttributeDetailsAdmin();
         $arrayReturn['price_final'] = $product->getFinalPrice();
-        return json_encode($arrayReturn);
+        return response()->json($arrayReturn);
     }
 
 /**
@@ -453,17 +416,17 @@ class ShopOrderController extends Controller
                 $style = 'style="font-weight:bold;"';
             }
             $blance = '<tr ' . $style . ' class="data-balance"><td>' . trans('order.balance') . ':</td><td align="right">' . sc_currency_format($orderUpdated->balance) . '</td></tr>';
-            return json_encode(['error' => 0, 'msg' => [
+            return response()->json(['error' => 0, 'detail' => [
                 'total' => sc_currency_format($orderUpdated->total),
                 'subtotal' => sc_currency_format($orderUpdated->subtotal),
                 'shipping' => sc_currency_format($orderUpdated->shipping),
                 'discount' => sc_currency_format($orderUpdated->discount),
                 'received' => sc_currency_format($orderUpdated->received),
                 'balance' => $blance,
-            ],
+            ],'msg' => trans('order.admin.update_success')
             ]);
         } else {
-            return json_encode(['error' => 1, 'msg' => 'Error ']);
+            return response()->json(['error' => 1, 'msg' => 'Error ']);
         }
     }
 
@@ -485,7 +448,7 @@ class ShopOrderController extends Controller
         foreach ($add_id as $key => $id) {
             //where exits id and qty > 0
             if ($id && $add_qty[$key]) {
-                $product = ShopProduct::find($id);
+                $product = (new ShopProduct)->getDetail($id);
                 $attDetails = $product->attributes->pluck('name', 'id')->all();
                 $pAttr = json_encode($add_att[$id] ?? []);
                 $items[] = array(
@@ -521,13 +484,13 @@ class ShopOrderController extends Controller
                     ->first()->subtotal;
                 $updateSubTotal = ShopOrderTotal::updateSubTotal($order_id, empty($subtotal) ? 0 : $subtotal);
                 //end update total price
-                return json_encode(['error' => 0, 'msg' => '']);
+                return response()->json(['error' => 0, 'msg' => trans('order.admin.update_success')]);
             } catch (\Exception $e) {
-                return json_encode(['error' => 1, 'msg' => 'Error: ' . $e->getMessage()]);
+                return response()->json(['error' => 1, 'msg' => 'Error: ' . $e->getMessage()]);
             }
 
         }
-        return json_encode(['error' => 0, 'msg' => '']);
+        return response()->json(['error' => 0, 'msg' => trans('order.admin.update_success')]);
     }
 
 /**
@@ -584,7 +547,7 @@ class ShopOrderController extends Controller
                 $style = 'style="font-weight:bold;"';
             }
             $blance = '<tr ' . $style . ' class="data-balance"><td>' . trans('order.balance') . ':</td><td align="right">' . sc_currency_format($orderUpdated->balance) . '</td></tr>';
-            $arrayReturn = ['error' => 0, 'msg' => [
+            $arrayReturn = ['error' => 0, 'detail' => [
                 'total' => sc_currency_format($orderUpdated->total),
                 'subtotal' => sc_currency_format($orderUpdated->subtotal),
                 'shipping' => sc_currency_format($orderUpdated->shipping),
@@ -593,12 +556,12 @@ class ShopOrderController extends Controller
                 'item_total_price' => sc_currency_render_symbol($item->total_price, $item->currency),
                 'item_id' => $id,
                 'balance' => $blance,
-            ],
+            ],'msg' => trans('order.admin.update_success')
             ];
         } catch (\Exception $e) {
             $arrayReturn = ['error' => 1, 'msg' => $e->getMessage()];
         }
-        return json_encode($arrayReturn);
+        return response()->json($arrayReturn);
     }
 
 /**
@@ -633,9 +596,9 @@ class ShopOrderController extends Controller
                 'order_status_id' => $order->status,
             ];
             (new ShopOrder)->addOrderHistory($dataHistory);
-            return json_encode(['error' => 0, 'msg' => '']);
+            return response()->json(['error' => 0, 'msg' => trans('order.admin.update_success')]);
         } catch (\Exception $e) {
-            return json_encode(['error' => 1, 'msg' => 'Error: ' . $e->getMessage()]);
+            return response()->json(['error' => 1, 'msg' => 'Error: ' . $e->getMessage()]);
 
         }
     }
@@ -652,7 +615,7 @@ Need mothod destroy to boot deleting in model
             $ids = request('ids');
             $arrID = explode(',', $ids);
             ShopOrder::destroy($arrID);
-            return response()->json(['error' => 0, 'msg' => '']);
+            return response()->json(['error' => 0, 'msg' => trans('order.admin.update_success')]);
         }
     }
 

@@ -92,7 +92,18 @@ class Permission
     {
         $uriCurrent = request()->fullUrl();
         $methodCurrent = request()->method();
-        return redirect()->route('admin.deny')->with(['method' => $methodCurrent, 'url' => $uriCurrent]);
+        if(strtoupper($methodCurrent) ==='GET'){
+            return redirect()->route('admin.deny')->with(['method' => $methodCurrent, 'url' => $uriCurrent]);
+        } else {
+            return response()->json([
+                'error' => '1',
+                'msg' => trans('admin.access_denied'),
+                'detail' => [
+                    'method' => $methodCurrent,
+                    'url' => $uriCurrent
+                    ]
+            ]);
+        }
     }
 
 }

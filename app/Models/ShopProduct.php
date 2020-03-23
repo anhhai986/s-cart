@@ -10,74 +10,32 @@ use App\Models\ShopProductGroup;
 use App\Models\ShopProductPromotion;
 use DB;
 use Illuminate\Database\Eloquent\Model;
-
+use Cache;
+use App\Models\ModelTrait;
 class ShopProduct extends Model
 {
-    public $table = 'shop_product';
+    use ModelTrait;
+    public $table = SC_DB_PREFIX.'shop_product';
     protected $guarded = [];
-    protected $appends = [
-        'name',
-        'keyword',
-        'description',
-        'content',
-    ];
 
-    protected static $listSingle = null;
+    protected $connection = SC_CONNECTION;
 
-
-/*
-List product single
- */
-    public static function getListSigle()
-    {
-        if (self::$listSingle == null) {
-            self::$listSingle = self::where('kind', SC_PRODUCT_SINGLE)->get()->keyBy('id')->toArray();
-        }
-        return self::$listSingle;
-    }
-/**
- * Get top product single
- * @param  integer $limit
- * @param  string  $orderBy field
- * @param  string  $sort    asc|desc
- */
-    public static function getTopSingle($limit = 8, $orderBy = 'id', $sort = 'desc')
-    {
-        return self::where('kind', SC_PRODUCT_SINGLE)->orderBy($orderBy, $sort)
-            ->limit($limit)->get()->keyBy('id')->toArray();
-    }
-
-/**
- * Get top product build
- * @param  integer $limit
- * @param  string  $orderBy field
- * @param  string  $sort    asc|desc
- */
-    public static function getTopBuild($limit = 8, $orderBy = 'id', $sort = 'desc')
-    {
-        return self::where('kind', SC_PRODUCT_BUILD)->orderBy($orderBy, $sort)
-            ->limit($limit)->get()->keyBy('id');
-    }
-
-/**
- * Get top product group
- * @param  integer $limit
- * @param  string  $orderBy field
- * @param  string  $sort    asc|desc
- */
-    public static function getTopGroup($limit = 8, $orderBy = 'id', $sort = 'desc')
-    {
-        return self::where('kind', SC_PRODUCT_GROUP)->orderBy($orderBy, $sort)
-            ->limit($limit)->get()->keyBy('id');
-    }
+    protected  $sc_kind = 'all'; // 0:single, 1:bundle, 2:group
+    protected  $sc_virtual = 'all'; // 0:physical, 1:download, 2:only view, 3: Service
+    protected  $sc_type = 'all'; // 0:nomal, 1:new, 2:hot
+    protected  $sc_promotion = 0; // 1: only produc promotion,
+    protected  $sc_array_ID = []; // array ID product
+    protected  $sc_category = []; // array category id
+    protected  $sc_brand = []; // array brand id
+    protected  $sc_supplier = []; // array supplier id
 
     public function brand()
     {
         return $this->belongsTo(ShopBrand::class, 'brand_id', 'id');
     }
-    public function vendor()
+    public function supplier()
     {
-        return $this->belongsTo(ShopVendor::class, 'vendor_id', 'id');
+        return $this->belongsTo(ShopSupplier::class, 'supplier_id', 'id');
     }
     public function categories()
     {
@@ -110,9 +68,9 @@ List product single
         return $this->hasMany(ShopProductAttribute::class, 'product_id', 'id');
     }
 
-/*
-Get final price
- */
+    /*
+    *Get final price
+    */
     public function getFinalPrice()
     {
         $promotion = $this->processPromotionPrice();
@@ -123,45 +81,24 @@ Get final price
         }
     }
 
-/**
- * [showPrice description]
- * @param  [type] $classNew [description]
- * @param  [type] $classOld [description]
- * @param  [type] $divWrap  [description]
- * @return [type]           [description]
- */
+    /**
+     * [showPrice description]
+     * @param  [type] $classNew [description]
+     * @param  [type] $classOld [description]
+     * @param  [type] $divWrap  [description]
+     * @return [type]           [description]
+     */
     public function showPrice($classNew = null, $classOld = null, $divWrap = null)
     {
         if (!sc_config('product_price')) {
             return false;
         }
-        $priceFinal = $this->getFinalPrice();
-        switch ($this->kind) {
-            case SC_PRODUCT_GROUP:
-                $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . trans('product.price_group') . '</span>';
-                if ($divWrap != null) {
-                    $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                }
-                return $str;
-                break;
-
-            default:
-                if ($this->price == $priceFinal) {
-                    $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . sc_currency_render($this->price) . '</span>';
-                    if ($divWrap != null) {
-                        $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                    }
-                    return $str;
-                } else {
-                    $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . sc_currency_render($priceFinal) . '</span><span class="' . (($classNew) ? $classOld : 'sc-old-price') . '">' . sc_currency_render($this->price) . '</span>';
-                    if ($divWrap != null) {
-                        $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                    }
-                    return $str;
-                }
-                break;
-        }
-
+        return  view('templates.'.sc_store('template').'.common.show_price', 
+            [
+                'price' => $this->price,
+                'priceFinal' => $this->getFinalPrice(),
+                'kind' => $this->kind,
+            ]);
     }
 
     /**
@@ -178,193 +115,50 @@ Get final price
         if (!sc_config('product_price')) {
             return false;
         }
-        $priceFinal = $this->getFinalPrice();
-        switch ($this->kind) {
-            case SC_PRODUCT_GROUP:
-                $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . trans('product.price_group_chose') . '</span>';
-                if ($divWrap != null) {
-                    $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                }
-                return $str;
-                break;
-
-            default:
-                if ($this->price == $priceFinal) {
-                    $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . sc_currency_render($this->price) . '</span>';
-                    if ($divWrap != null) {
-                        $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                    }
-                    return $str;
-                } else {
-                    $str = '<span class="' . (($classNew) ? $classNew : 'sc-new-price') . '">' . sc_currency_render($priceFinal) . '</span><span class="' . (($classNew) ? $classOld : 'sc-old-price') . '">' . sc_currency_render($this->price) . '</span>';
-                    if ($divWrap != null) {
-                        $str = '<div class="' . $divWrap . '">' . $str . '</div>';
-                    }
-                    return $str;
-                }
-                break;
-        }
-
+        return  view('templates.'.sc_store('template').'.common.show_price_detail', 
+        [
+            'price' => $this->price,
+            'priceFinal' => $this->getFinalPrice(),
+            'kind' => $this->kind,
+        ]);
     }
 
-/**
- * Get product detail
- * @param  [int] $id [description]
- * @param  [string] $alias [description]
- * @return [type]     [description]
- */
-    public function getProduct($id = null, $alias = null)
+    /**
+     * Get product detail
+     * @param  [string] $key [description]
+     * @param  [string] $type id, sku, alias
+     * @param  [''|int] $status 
+     * '' if is all status
+     * @return [type]     [description]
+     */
+    public function getDetail($key = null, $type = null,  $status = 1)
     {
-        if($id) {
-            $product = $this->where('id', $id);  
-        } else {
-            $product = $this->where('alias', $alias);
+        if(empty($key)) {
+            return null;
         }
+        $tableDescription = (new ShopProductDescription)->getTable();
+        $product = $this
+            ->leftJoin($tableDescription, $tableDescription . '.product_id', $this->getTable() . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+
+        if(empty($type)) {
+            $product = $product->where('id', (int)$key);  
+        } elseif ($type == 'alias') {
+            $product = $product->where('alias', $key);
+        } elseif ($type == 'sku') {
+            $product = $product->where('sku', $key);
+        } else {
+            return null;
+        }
+        if($status) {
+            $product = $product->where('status', (int)$status);
+        }
+        
         $product = $product
-            ->where('status', 1)
             ->with('images')
             ->with('promotionPrice');
         $product = $product->first();
         return $product;
-    }
-
-/**
- * [getProducts description]
- * @param  [type] $type      [description]
- * @param  [type] $limit     [description]
- * @param  [type] $opt       [description]
- * @param  [type] $sortBy    [description]
- * @param  string $sortOrder [description]
- * @return [type]            [description]
- */
-    public function getProducts($type = null, $limit = null, $opt = null, $sortBy = null, $sortOrder = 'desc')
-    {
-        $lang = sc_get_locale();
-        $query = $this->where($this->getTable() . '.status', 1)
-            ->with(['descriptions' => function ($q) use ($lang) {
-                $q->where('lang', $lang);
-            }])
-            ->with('promotionPrice');
-
-        if ($type) {
-            $query = $query->where('type', $type);
-        }
-
-        //Hidden product out of stock
-        if (empty(sc_config('product_display_out_of_stock'))) {
-            $query = $query->where('stock', '>', 0);
-        }
-        $query = $query->sort($sortBy, $sortOrder);
-        //get all
-        if (!(int) $limit) {
-            return $query->get();
-        } else
-        //paginate
-        if ($opt == 'paginate') {
-            return $query->paginate((int) $limit);
-        } else
-        //random
-        if ($opt == 'random') {
-            return $query->inRandomOrder()->limit($limit)->get();
-        } else {
-            return $query->limit($limit)->get();
-        }
-    }
-
-    public function getSearch($keyword, $limit = 12, $sortBy = null, $sortOrder = 'desc')
-    {
-        $lang = sc_get_locale();
-
-        return $this->where('status', 1)->with(['descriptions' => function ($q) use ($lang) {
-            $q->where('lang', $lang);
-        }])
-            ->with('promotionPrice')
-            ->leftJoin((new ShopProductDescription)->getTable(), (new ShopProductDescription)->getTable() . '.product_id', $this->getTable() . '.id')
-            ->where((new ShopProductDescription)->getTable() . '.lang', sc_get_locale())
-            ->where(function ($sql) use ($keyword) {
-                $sql->where((new ShopProductDescription)->getTable() . '.name', 'like', '%' . $keyword . '%')
-                    ->orWhere($this->getTable() . '.sku', 'like', '%' . $keyword . '%');
-            })
-            ->sort($sortBy, $sortOrder)
-            ->paginate($limit);
-    }
-
-/**
- * Get list product promotion
- * @param  [int]  $limit  [description]
- * @param  boolean $random [description]
- * @return [type]          [description]
- */
-    public function getProductsSpecial($limit = null, $random = true)
-    {
-
-        $special = $this
-            ->select(DB::raw($this->getTable() . '.*'))
-            ->join(
-                (new ShopProductPromotion)->getTable(),
-                $this->getTable() . '.id', '=', (new ShopProductPromotion)->getTable() . '.product_id')
-            ->where((new ShopProductPromotion)->getTable() . '.status_promotion', 1)
-            ->where(function ($query) {
-                $query->where((new ShopProductPromotion)->getTable() . '.date_end', '>=', date("Y-m-d"))
-                    ->orWhereNull((new ShopProductPromotion)->getTable() . '.date_end');
-            })
-            ->where(function ($query) {
-                $query->where((new ShopProductPromotion)->getTable() . '.date_start', '<=', date("Y-m-d"))
-                    ->orWhereNull((new ShopProductPromotion)->getTable() . '.date_start');
-            })
-            ->where($this->getTable() . '.status', 1);
-        if ($random) {
-            $special = $special->inRandomOrder();
-        }
-        if ($limit) {
-            $special = $special->limit($limit);
-        }
-        return $special->get();
-    }
-
-/*
-Get products of category
-category_id: array or string
- */
-    public function getProductsToCategory($category_id, $limit = null, $opt = null, $sortBy = null, $sortOrder = 'asc', $status = 1)
-    {
-        $query = (new ShopProduct)
-            ->with('promotionPrice')
-            ->leftJoin((new ShopProductCategory)->getTable(), (new ShopProductCategory)->getTable() . '.product_id', $this->getTable() . '.id');
-        if (is_array($category_id)) {
-            $query = $query->whereIn((new ShopProductCategory)->getTable() . '.category_id', $category_id);
-        } else {
-            $query = $query->where((new ShopProductCategory)->getTable() . '.category_id', $category_id);
-        }
-        //product active
-        if ($status) {
-            $query = $query->where($this->getTable() . '.status', 1);
-        }
-
-        //Hidden product out of stock
-        if (empty(sc_config('product_display_out_of_stock'))) {
-            $query = $query->where($this->getTable() . '.stock', '>', 0);
-        }
-        //sort product
-        $query = $query->sort($sortBy, $sortOrder);
-
-        //Get all product
-        if (!(int) $limit) {
-            return $query->get();
-        } else
-        //paginate
-        if ($opt == 'paginate') {
-            return $query->paginate((int) $limit);
-        } else
-        //random
-        if ($opt == 'random') {
-            return $query->inRandomOrder()->limit($limit)->get();
-        }
-        //
-        else {
-            return $query->limit($limit)->get();
-        }
-
     }
 
     protected static function boot()
@@ -382,89 +176,51 @@ category_id: array or string
         });
     }
 
-/*
-Get thumb
- */
+    /*
+    *Get thumb
+    */
     public function getThumb()
     {
         return sc_image_get_path_thumb($this->image);
     }
 
-/*
-Get image
- */
+    /*
+    *Get image
+    */
     public function getImage()
     {
         return sc_image_get_path($this->image);
 
     }
 
-/**
- * [getUrl description]
- * @return [type] [description]
- */
+    /**
+     * [getUrl description]
+     * @return [type] [description]
+     */
     public function getUrl()
     {
         return route('product.detail', ['alias' => $this->alias]);
     }
 
-//Fields language
-    public function getName()
-    {
-        return $this->processDescriptions()['name'] ?? '';
-    }
-    public function getKeyword()
-    {
-        return $this->processDescriptions()['keyword'] ?? '';
-    }
-    public function getDescription()
-    {
-        return $this->processDescriptions()['description'] ?? '';
-    }
-    public function getContent()
-    {
-        return $this->processDescriptions()['content'] ?? '';
-    }
 
-//Attributes
-    public function getNameAttribute()
-    {
-        return $this->getName();
-    }
-    public function getKeywordAttribute()
-    {
-        return $this->getKeyword();
-
-    }
-    public function getDescriptionAttribute()
-    {
-        return $this->getDescription();
-
-    }
-    public function getContentAttribute()
-    {
-        return $this->getContent();
-
-    }
-
-/**
- * [getArrayProductName description]
- * @return [type] [description]
- */
+    /**
+     * [getArrayProductName description]
+     * @return [type] [description]
+     */
     public static function getArrayProductName()
     {
         $products = self::select('id', 'sku')->get();
         $arrProduct = [];
         foreach ($products as $key => $product) {
-            $arrProduct[$product->id] = $product->name . ' (' . $product->sku . ')';
+            $arrProduct[$product->id] = $product->getFull()->name . ' (' . $product->sku . ')';
         }
         return $arrProduct;
     }
 
-/**
- * [getPercentDiscount description]
- * @return [type] [description]
- */
+    /**
+     * [getPercentDiscount description]
+     * @return [type] [description]
+     */
     public function getPercentDiscount()
     {
         return round((($this->price - $this->getFinalPrice()) / $this->price) * 100);
@@ -472,16 +228,11 @@ Get image
 
     public function renderAttributeDetails()
     {
-        $html = '';
-        $details = $this->attributes()->get()->groupBy('attribute_group_id');
-        $groups = ShopAttributeGroup::getList();
-        foreach ($details as $groupId => $detailsGroup) {
-            $html .= '<br><b><label>' . $groups[$groupId] . '</label></b>: ';
-            foreach ($detailsGroup as $k => $detail) {
-                $html .= '<label class="radio-inline"><input ' . (($k == 0) ? "checked" : "") . ' type="radio" name="form_attr[' . $groupId . ']" value="' . $detail->name . '">' . $detail->name . '</label> ';
-            }
-        }
-        return $html;
+        return  view('templates.'.sc_store('template').'.common.render_attribute', 
+        [
+            'details' => $this->attributes()->get()->groupBy('attribute_group_id'),
+            'groups' => ShopAttributeGroup::getList(),
+        ]);
     }
 
     public function renderAttributeDetailsAdmin()
@@ -505,19 +256,19 @@ Get image
         return $query->orderBy($sortBy, $sortOrder);
     }
 
-/**
-//Condition:
-//Active
-//In of stock or allow order out of stock
-//Date availabe
-// Not SC_PRODUCT_GROUP
- */
+    /**
+    *Condition:
+    * -Active
+    * -In of stock or allow order out of stock
+    * -Date availabe
+    * -Not SC_PRODUCT_GROUP
+    */
     public function allowSale()
     {
         if(!sc_config('product_price')) {
             return false;
         }
-        if ($this->status &&
+        if ($this->sc_status &&
             (sc_config('product_preorder') == 1 || $this->date_available == null || date('Y-m-d H:i:s') >= $this->date_available) &&
             (sc_config('product_buy_out_of_stock') || $this->stock) &&
             $this->kind != SC_PRODUCT_GROUP
@@ -528,14 +279,9 @@ Get image
         }
     }
 
-    public function processDescriptions()
-    {
-        return $this->descriptions->keyBy('lang')[sc_get_locale()] ?? [];
-    }
-
-/*
-Check promotion price
- */
+    /*
+    Check promotion price
+    */
     public function processPromotionPrice()
     {
         $promotion = $this->promotionPrice;
@@ -549,12 +295,13 @@ Check promotion price
 
         return -1;
     }
+
     /*
     Upate stock, sold
      */
     public static function updateStock($product_id, $qty_change)
     {
-        $item = ShopProduct::find($product_id);
+        $item = self::find($product_id);
         if ($item) {
             $item->stock = $item->stock - $qty_change;
             $item->sold = $item->sold + $qty_change;
@@ -574,4 +321,404 @@ Check promotion price
         }
 
     }
+
+    /**
+     * Get list product
+     *
+     * @param   array  $arrOpt
+     * Example: ['status' => 1, 'top' => 1]
+     * @param   array  $arrSort
+     * Example: ['sortBy' => 'id', 'sortOrder' => 'asc']
+     * @param   array  $arrLimit  [$arrLimit description]
+     * Example: ['step' => 0, 'limit' => 20]
+     * @return  [type]             [return description]
+     */
+    public function getList($arrOpt = [], $arrSort = [], $arrLimit = [])
+    {
+        $sortBy = $arrSort['sortBy'] ?? 'sort';
+        $sortOrder = $arrSort['sortOrder'] ?? 'asc';
+        $step = $arrLimit['step'] ?? 0;
+        $limit = $arrLimit['limit'] ?? 0;
+
+        $data = $this->sort($sortBy, $sortOrder);
+        if(count($arrOpt = [])) {
+            foreach ($arrOpt as $key => $value) {
+                $data = $data->where($key, $value);
+            }
+        }
+        if((int)$limit) {
+            $start = $step * $limit;
+            $data = $data->offset((int)$start)->limit((int)$limit);
+        }
+
+        $data = $data->get()->keyBy('id');
+
+        return $data;
+    }
+
+    /**
+     * Process list full product
+     *
+     * @return  [type]  [return description]
+     */
+    public static function getListFull()
+    {
+        if(sc_config('cache_status') && sc_config('cache_product')) {
+            if (!Cache::has('cache_product')) {
+                Cache::put('cache_product', self::get()->keyBy('id')->toJson(), $seconds = sc_config('cache_time', 0)?:600);
+            }
+            return Cache::get('cache_product');
+        } else {
+            return  self::get()->keyBy('id')->toJson();
+        }
+    }
+
+    /**
+     * Start new process get data
+     *
+     * @return  new model
+     */
+    public function start() {
+        return new ShopProduct;
+    }
+    
+    /**
+     * Set product type
+     */
+    private function setType($type) {
+        if ($type === 'all') {
+            $this->sc_type = $type;
+        } else {
+            $this->sc_type = (int)$type;
+        }
+        return $this;
+    }
+
+    /**
+     * Set product kind
+     */
+    private function setKind($kind) {
+        if ($kind === 'all') {
+            $this->sc_kind = $kind;
+        } else {
+            $this->sc_kind = (int)$kind;
+        }
+        return $this;
+    }
+
+    /**
+     * Set virtual product
+     */
+    private function setVirtual($virtual) {
+        if ($virtual === 'all') {
+            $this->sc_virtual = $virtual;
+        } else {
+            $this->sc_virtual = (int)$virtual;
+        }
+        return $this;
+    }
+
+    /**
+     * Set array category 
+     *
+     * @param   [array|int]  $category 
+     *
+     */
+    private function setCategory($category) {
+        if (is_array($category)) {
+            $this->sc_category = $category;
+        } else {
+            $this->sc_category = array((int)$category);
+        }
+        return $this;
+    }
+
+    /**
+     * Set array brand 
+     *
+     * @param   [array|int]  $brand 
+     *
+     */
+    private function setBrand($brand) {
+        if (is_array($brand)) {
+            $this->sc_brand = $brand;
+        } else {
+            $this->sc_brand = array((int)$brand);
+        }
+        return $this;
+    }
+
+    /**
+     * Set product promotion 
+     *
+     */
+    private function setPromotion() {
+        $this->sc_promotion = 1;
+        return $this;
+    }
+
+    /**
+     * Set array ID product 
+     *
+     * @param   [array|int]  $arrID 
+     *
+     */
+    private function setArrayID($arrID) {
+        if (is_array($arrID)) {
+            $this->sc_array_ID = $arrID;
+        } else {
+            $this->sc_array_ID = array((int)$arrID);
+        }
+        return $this;
+    }
+
+    
+    /**
+     * Set array supplier 
+     *
+     * @param   [array|int]  $supplier 
+     *
+     */
+    private function setSupplier($supplier) {
+        if (is_array($supplier)) {
+            $this->sc_supplier = $supplier;
+        } else {
+            $this->sc_supplier = array((int)$supplier);
+        }
+        return $this;
+    }
+
+    /**
+     * Product new
+     */
+    public function getProductNew() {
+        $this->setStatus(1);
+        $this->setType(SC_PRODUCT_NEW);
+        return $this;
+    }
+
+    /**
+     * Product hot
+     */
+    public function getProductHot() {
+        $this->setStatus(1);
+        $this->setType(SC_PRODUCT_HOT);
+        return $this;
+    }
+
+    /**
+     * Product build
+     */
+    public function getProductBuild() {
+        $this->setStatus(1);
+        $this->setKind(SC_PRODUCT_BUILD);
+        return $this;
+    }
+
+    /**
+     * Product group
+     */
+    public function getProductGroup() {
+        $this->setStatus(1);
+        $this->setKind(SC_PRODUCT_GROUP);
+        return $this;
+    }
+
+    /**
+     * Product single
+     */
+    public function getProductSingle() {
+        $this->setStatus(1);
+        $this->setKind(SC_PRODUCT_SINGLE);
+        return $this;
+    }
+
+    /**
+     * Get product to array Catgory
+     * @param   [array|int]  $arrCategory 
+     */
+    public function getProductToCategory($arrCategory) {
+        $this->setStatus(1);
+        $this->setCategory($arrCategory);
+        return $this;
+    }
+
+    /**
+     * Get product to array Brand
+     * @param   [array|int]  $arrBrand 
+     */
+    public function getProductToBrand($arrBrand) {
+        $this->setStatus(1);
+        $this->setBrand($arrBrand);
+        return $this;
+    }
+    
+    /**
+     * Get product to array Supplier
+     * @param   [array|int]  $arrSupplier 
+     */
+    public function getProductToSupplier($arrSupplier) {
+        $this->setStatus(1);
+        $this->setSupplier($arrSupplier);
+        return $this;
+    }
+
+
+    /**
+     * Get product latest
+     */
+    public function getProductLatest() {
+        $this->setStatus(1);
+        $this->setLimit(10);
+        $this->setSort(['id', 'desc']);
+        return $this;
+    }
+
+    /**
+     * Get product last view
+     */
+    public function getProductLastView() {
+        $this->setStatus(1);
+        $this->setLimit(10);
+        $this->setSort(['date_available', 'desc']);
+        return $this;
+    }
+
+    /**
+     * Get product best sell
+     */
+    public function getProductBestSell() {
+        $this->setStatus(1);
+        $this->setLimit(10);
+        $this->setSort(['sold', 'desc']);
+        return $this;
+    }
+
+    /**
+     * Get product promotion
+     */
+    public function getProductPromotion() {
+        $this->setStatus(1);
+        $this->setLimit(10);
+        $this->setPromotion();
+        return $this;
+    }
+
+    /**
+     * Get product from list ID product
+     *
+     * @param   [array]  $arrID  array id product
+     *
+     * @return  [type]          [return description]
+     */
+    public function getProductFromListID($arrID) {
+        $this->setStatus(1);
+        if(is_array($arrID)) {
+            $this->setArrayID($arrID);
+        }
+        return $this;
+    }
+
+    /**
+     * build Query
+     */
+    public function buildQuery() {
+
+        $tableDescription = (new ShopProductDescription)->getTable();
+
+        //description
+        $query = $this
+            ->leftJoin($tableDescription, $tableDescription . '.product_id', $this->getTable() . '.id')
+            ->where($tableDescription . '.lang', sc_get_locale());
+        //search keyword
+        if ($this->sc_keyword !='') {
+            $query = $query->where(function ($sql) use($tableDescription){
+                $sql->where($tableDescription . '.name', 'like', '%' . $this->sc_keyword . '%')
+                ->orWhere($tableDescription . '.keyword', 'like', '%' . $this->sc_keyword . '%')
+                ->orWhere($tableDescription . '.description', 'like', '%' . $this->sc_keyword . '%')
+                ->orWhere($this->getTable() . '.sku', 'like', '%' . $this->sc_keyword . '%');
+            });
+        }
+
+        //Promotion
+        if ($this->sc_promotion == 1) {
+            $tablePromotion = (new ShopProductPromotion)->getTable();
+            $query = $query->join(
+                $tablePromotion,
+                $this->getTable() . '.id', '=', $tablePromotion . '.product_id')
+                ->where($tablePromotion . '.status_promotion', 1)
+                ->where(function ($query) use($tablePromotion){
+                    $query->where($tablePromotion . '.date_end', '>=', date("Y-m-d"))
+                        ->orWhereNull($tablePromotion . '.date_end');
+                })
+                ->where(function ($query) use($tablePromotion){
+                    $query->where($tablePromotion . '.date_start', '<=', date("Y-m-d"))
+                        ->orWhereNull($tablePromotion . '.date_start');
+                });
+        }
+
+        $query = $query->with('promotionPrice');
+            
+
+        if (count($this->sc_category)) {
+            $query = $query->leftJoin((new ShopProductCategory)->getTable(), (new ShopProductCategory)->getTable() . '.product_id', $this->getTable() . '.id');
+            $query = $query->whereIn((new ShopProductCategory)->getTable() . '.category_id', $this->sc_category);
+        }
+
+        if (count($this->sc_array_ID)) {
+            $query = $query->whereIn('id', $this->sc_array_ID);
+        }
+
+        if ($this->sc_status !== 'all') {
+            $query = $query->where('status', $this->sc_status);
+        }
+
+        if ($this->sc_kind !== 'all') {
+            $query = $query->where('kind', $this->sc_kind);
+        }
+
+        if ($this->sc_type !== 'all') {
+            $query = $query->where('type', $this->sc_type);
+        }
+        
+        if ($this->sc_virtual !== 'all') {
+            $query = $query->where('virtual', $this->sc_virtual);
+        }
+
+        if (count($this->sc_brand)) {
+            $query = $query->whereIn('brand_id', $this->sc_brand);
+        }
+
+        if (count($this->sc_supplier)) {
+            $query = $query->whereIn('supplier_id', $this->sc_supplier);
+        }
+
+        if (count($this->sc_moreWhere)) {
+            foreach ($this->sc_moreWhere as $key => $where) {
+                if(count($where)) {
+                    $query = $query->where($where[0], $where[1], $where[2]);
+                }
+            }
+        }
+
+        if ($this->sc_random) {
+            $query = $query->inRandomOrder();
+        } else {
+            if (is_array($this->sc_sort) && count($this->sc_sort)) {
+                foreach ($this->sc_sort as  $rowSort) {
+                    if(is_array($rowSort) && count($rowSort) == 2) {
+                        $query = $query->sort($rowSort[0], $rowSort[1]);
+                    }
+                }
+            }
+        }
+
+        //Hidden product out of stock
+        if (empty(sc_config('product_display_out_of_stock'))) {
+            $query = $query->where('stock', '>', 0);
+        }
+
+        return $query;
+    }
+
 }

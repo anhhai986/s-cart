@@ -7,22 +7,28 @@ use Illuminate\Database\Eloquent\Model;
 class AdminConfig extends Model
 {
     public $timestamps = false;
-    public $table = 'admin_config';
+    public $table = SC_DB_PREFIX.'admin_config';
     protected static $getAll = null;
+    protected $connection = SC_CONNECTION;
 
-/**
- * [getExtensionsGroup description]
- * @param  [type]  $group      [description]
- * @param  boolean $onlyActive [description]
- * @return [type]              [description]
- */
-    public static function getExtensionsGroup($group, $onlyActive = true)
+    /**
+     * get Plugin installed
+     * @param  [type]  $code      Payment, Shipping,..
+     * @param  boolean $onlyActive
+     * @return [type]              [description]
+     */
+    public static function getPluginCode($code = null, $onlyActive = true)
     {
-        $return = self::where('code', $group);
-        if ($onlyActive) {
-            $return = $return->where('value', 1);
+        if($code == null) {
+            $query =  self::where('group', 'Plugins');
+        } else {
+            $code = sc_word_format_class($code);
+            $query =  self::where('group', 'Plugins')->where('code', $code);
         }
-        $return = $return->orderBy('sort', 'asc')
+        if ($onlyActive) {
+            $query = $query->where('value', 1);
+        }
+        $return = $query->orderBy('sort', 'asc')
             ->get()->keyBy('key');
         return $return;
     }

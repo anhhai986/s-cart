@@ -137,7 +137,7 @@
                                     <label for="status"
                                         class="col-sm-2  control-label">{{ trans('brand.status') }}</label>
                                     <div class="col-sm-8">
-                                        <input type="checkbox" name="status"
+                                        <input class="input" type="checkbox" name="status"
                                             {{  old('status',(empty($brand['status'])?0:1))?'checked':''}}>
                                     </div>
                                 </div>
@@ -173,24 +173,12 @@
 @endsection
 
 @push('styles')
-<!-- Select2 -->
-<link rel="stylesheet" href="{{ asset('admin/AdminLTE/bower_components/select2/dist/css/select2.min.css')}}">
-
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
 
 @endpush
 
 @push('scripts')
-<!-- Select2 -->
-<script src="{{ asset('admin/AdminLTE/bower_components/select2/dist/js/select2.full.min.js')}}"></script>
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
 
 <script type="text/javascript">
     $(document).ready(function() {

@@ -5,13 +5,13 @@ $prefixNews = sc_config('PREFIX_NEWS')??'news';
 
 Route::get('/'.$prefixSearch.$suffix, 'ShopFront@search')
 ->name('search');
-Route::post('/subscribe', 'ContentFront@emailSubscribe')
+Route::post('/subscribe', 'ShopFront@emailSubscribe')
 ->name('subscribe');
-Route::get('/'.$prefixContact.$suffix, 'ContentFront@getContact')
+Route::get('/'.$prefixContact.$suffix, 'ShopFront@getContact')
 ->name('contact');
-Route::post('/contact', 'ContentFront@postContact')
+Route::post('/contact', 'ShopFront@postContact')
 ->name('contact.post');
-Route::get('/'.$prefixNews, 'ContentFront@news')
+Route::get('/'.$prefixNews, 'ShopFront@news')
 ->name('news');
-Route::get('/'.$prefixNews.'/{alias}'.$suffix, 'ContentFront@newsDetail')
+Route::get('/'.$prefixNews.'/{alias}'.$suffix, 'ShopFront@newsDetail')
 ->name('news.detail');

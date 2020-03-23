@@ -6,22 +6,75 @@
          <div class="box">
       <div class="box-header with-border">
         <div class="pull-right">
-         {!! $menu_search??'' !!}
+          @if (!empty($topMenuRight) && count($topMenuRight))
+          <div class="btn-group pull-right" style="margin-right: 10px">
+            @foreach ($topMenuRight as $item)
+                <div class="menu-right">{!! $item !!}</div>
+            @endforeach
+          </div>
+          @endif
         </div>
+        <div class="pull-left">
+          @if (!empty($topMenuLeft) && count($topMenuLeft))
+            @foreach ($topMenuLeft as $item)
+                <div class="menu-left">{!! $item !!}</div>
+            @endforeach
+          @endif
+         </div>
         <!-- /.box-tools -->
       </div>
 
       <div class="box-header with-border">
          <div class="pull-right">
-         {!! $menu_right??'' !!}
+           @if (!empty($menuRight) && count($menuRight))
+           <div class="btn-group pull-right" style="margin-right: 10px">
+             @foreach ($menuRight as $item)
+                 <div class="menu-right">{!! $item !!}</div>
+             @endforeach
+           </div>
+           @endif
          </div>
 
-         <span>
 
-         {!! $menu_left??'' !!}
-         {!! $menu_sort??'' !!}
+         <div class="pull-left">
+          @if (!empty($removeList))
+            <div class="menu-left">
+              <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button>
+            </div>
+            <div class="menu-left">
+              <a class="btn btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> {{ trans('admin.delete') }}</span></a>
+            </div>
+          @endif
 
-         </span>
+          @if (!empty($buttonRefresh))
+            <div class="menu-left">
+              <a class="btn btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> {{ trans('admin.refresh') }}</span></a>
+            </div>
+          @endif
+
+          @if (!empty($menuLeft) && count($menuLeft))
+            @foreach ($menuLeft as $item)
+                <div class="menu-left">{!! $item !!}</div>
+            @endforeach
+          @endif
+          @if (!empty($buttonSort))
+          <div class="menu-left">
+            <div class="btn-group pull-right">
+              <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
+                <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> {{ trans('admin.sort') }}</span>
+              </a>
+            </div>
+            <div class="btn-group pull-right">
+              <div class="form-group">
+                  <select class="form-control" id="order_sort">
+                  {!! $optionSort??'' !!}
+                  </select>
+              </div>
+            </div>
+          </div>
+          @endif
+        </div>
+
       </div>
       <!-- /.box-header -->
     <section id="pjax-container" class="table-list">
@@ -29,6 +82,9 @@
          <table class="table table-hover">
             <thead>
                <tr>
+                @if (!empty($removeList))
+                <th></th>
+                @endif
                 @foreach ($listTh as $key => $th)
                     <th>{!! $th !!}</th>
                 @endforeach
@@ -37,6 +93,11 @@
             <tbody>
                 @foreach ($dataTr as $keyRow => $tr)
                     <tr>
+                        @if (!empty($removeList))
+                        <td>
+                          <input class="input" type="checkbox" class="grid-row-checkbox" data-id="{{ $tr['id']??'' }}">
+                        </td>
+                        @endif
                         @foreach ($tr as $key => $trtd)
                             <td>{!! $trtd !!}</td>
                         @endforeach
@@ -46,7 +107,7 @@
          </table>
       </div>
       <div class="box-footer clearfix">
-         {!! $result_items??'' !!}
+         {!! $resultItems??'' !!}
          {!! $pagination??'' !!}
       </div>
     </section>
@@ -63,6 +124,7 @@
   max-width:150px;word-break:break-all;
 }
 </style>
+{!! $css ?? '' !!}
 @endpush
 
 @push('scripts')
@@ -75,9 +137,9 @@
       $.pjax.reload({container:'#pjax-container'});
     });
 
-    $(document).on('submit', '#button_search', function(event) {
-      $.pjax.submit(event, '#pjax-container')
-    })
+      $(document).on('submit', '#button_search', function(event) {
+        $.pjax.submit(event, '#pjax-container')
+      })
 
     $(document).on('pjax:send', function() {
       $('#loading').show()
@@ -99,7 +161,13 @@
       }
     });
 
-    {!! $script_sort??'' !!}
+    @if ($buttonSort)
+      $('#button_sort').click(function(event) {
+        var url = '{{ $urlSort??'' }}?sort_order='+$('#order_sort option:selected').val();
+        $.pjax({url: url, container: '#pjax-container'})
+      });
+    @endif
+    
 
     $(document).on('ready pjax:end', function(event) {
       $('.table-list input').iCheck({
@@ -130,40 +198,34 @@ $('.grid-trash').on('click', function() {
 });
 
   function deleteItem(ids){
-  const swalWithBootstrapButtons = Swal.mixin({
+  Swal.mixin({
     customClass: {
       confirmButton: 'btn btn-success',
       cancelButton: 'btn btn-danger'
     },
     buttonsStyling: true,
-  })
-
-  swalWithBootstrapButtons.fire({
-    title: 'Are you sure to delete this item ?',
+  }).fire({
+    title: '{{ trans('admin.confirm_delete') }}',
     text: "",
     type: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
+    confirmButtonText: '{{ trans('admin.confirm_delete_yes') }}',
     confirmButtonColor: "#DD6B55",
-    cancelButtonText: 'No, cancel!',
+    cancelButtonText: '{{ trans('admin.confirm_delete_no') }}',
     reverseButtons: true,
 
     preConfirm: function() {
         return new Promise(function(resolve) {
             $.ajax({
                 method: 'post',
-                url: '{{ $url_delete_item }}',
+                url: '{{ $urlDeleteItem ?? '' }}',
                 data: {
                   ids:ids,
                     _token: '{{ csrf_token() }}',
                 },
                 success: function (data) {
                     if(data.error == 1){
-                      swalWithBootstrapButtons.fire(
-                        'Cancelled',
-                        data.msg,
-                        'error'
-                      )
+                      alertMsg('{{ trans('admin.warning') }}', data.msg, 'error');
                       $.pjax.reload('#pjax-container');
                       return;
                     }else{
@@ -178,11 +240,7 @@ $('.grid-trash').on('click', function() {
 
   }).then((result) => {
     if (result.value) {
-      swalWithBootstrapButtons.fire(
-        'Deleted!',
-        'Item has been deleted.',
-        'success'
-      )
+      alertMsg('{{ trans('admin.confirm_delete_deleted') }}', '{{ trans('admin.confirm_delete_deleted_msg') }}', 'success');
     } else if (
       // Read more about handling dismissals
       result.dismiss === Swal.DismissReason.cancel
@@ -199,13 +257,6 @@ $('.grid-trash').on('click', function() {
 
 
 </script>
-<script>
-  $(function () {
-    $('input').iCheck({
-      checkboxClass: 'icheckbox_square-blue',
-      radioClass: 'iradio_square-blue',
-      increaseArea: '20%' /* optional */
-    });
-  });
-</script>
+
+{!! $js ?? '' !!}
 @endpush

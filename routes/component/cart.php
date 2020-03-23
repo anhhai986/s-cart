@@ -21,7 +21,7 @@ Route::post('/cart_add', 'ShopCart@addToCart')
 ->name('cart.add');
 Route::get('/cart_remove/{id}', 'ShopCart@removeItem')
 ->name('cart.remove');
-Route::get('/clear_Cart', 'ShopCart@clearCart')
+Route::get('/clear_Cart/{instance?}', 'ShopCart@clearCart')
 ->name('cart.clear');
 Route::post('/add_to_cart_ajax', 'ShopCart@addToCartAjax')
 ->name('cart.add_ajax');

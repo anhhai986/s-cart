@@ -15,7 +15,7 @@ return [
         'edit' => 'Chỉnh sửa',
         'add_new' => 'Thêm mới',
         'refresh' => 'Làm mới',
-        'result_item' => 'Showing <b>:item_from</b> to <b>:item_to</b> of <b>:item_total</b> items</b>',
+        'result_item' => 'Hiển thị <b>:item_from</b> tới <b>:item_to</b> trong số <b>:item_total</b> kết quả</b>',
         'sort' => 'Sắp xếp',
         'sort_order' => [
             'path_desc' => 'Path Z-A',

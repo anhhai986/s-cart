@@ -5,17 +5,6 @@ use App\Models\AdminStore;
 use App\Models\ShopBlockContent;
 use App\Models\ShopLanguage;
 use App\Models\ShopLink;
-/*
-Get extension in group
- */
-
-if (!function_exists('sc_get_extension')) {
-    function sc_get_extension($group, $onlyActive = true)
-    {
-        $group = sc_word_format_class($group);
-        return AdminConfig::getExtensionsGroup($group, $onlyActive);
-    }
-}
 
 /*
 Get all block content
@@ -149,7 +138,7 @@ if (!function_exists('sc_url_render')) {
 
         if (count($arrCheckUrl) == 2) {
             $string = \Illuminate\Support\Str::start($arrCheckUrl[1], '/');
-            $string = config('app.admin_prefix') . $string;
+            $string = SC_ADMIN_PREFIX . $string;
             return url($string);
         }
         return url($string);
@@ -274,10 +263,10 @@ if (!function_exists('sc_report')) {
             //
         }
 
-        $pathLog = storage_path('logs/handle/'.date('Y-m-d').'.txt');
-        $logFile = fopen($pathLog, "a+") or die("Unable to open file!");
-        fwrite($logFile, $msg);
-        fclose($logFile);
+        // $pathLog = storage_path('logs/handle/'.date('Y-m-d').'.txt');
+        // $logFile = fopen($pathLog, "a+") or die("Unable to open file!");
+        // fwrite($logFile, $msg);
+        // fclose($logFile);
     }
 }
 
@@ -286,7 +275,7 @@ if (!function_exists('sc_report')) {
 Zip file or folder
  */
 if (!function_exists('sc_zip')) {
-    function sc_zip($source, $destination)
+    function sc_zip(string $source, string $destination)
     {
         if (extension_loaded('zip')) {
             if (file_exists($source)) {
@@ -316,6 +305,24 @@ if (!function_exists('sc_zip')) {
         return false;
     }
 }
+
+/**
+ * Unzip file to folder
+ *
+ * @return  [type]  [return description]
+ */
+if (!function_exists('sc_unzip')) {
+    function sc_unzip(string $source, string $destination)
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open(str_replace("//", "/", $source)) === true) {
+            $zip->extractTo($destination);
+            return $zip->close();
+        }
+        return false;
+    }
+}
+
 /*
     Get locale
     */
@@ -325,3 +332,25 @@ if (!function_exists('sc_get_locale')) {
         return app()->getLocale();
     }
 }
+
+/*
+    Get all template
+    */
+    if (!function_exists('sc_get_all_template')) {
+        function sc_get_all_template()
+        {
+            $arrTemplates = [];
+            foreach (glob(resource_path() . "/views/templates/*") as $template) {
+                if (is_dir($template)) {
+                    $infoTemlate['code'] = explode('templates/', $template)[1];
+                    $config = ['name' => '', 'auth' => '', 'email' => '', 'website' => ''];
+                    if (file_exists($template . '/config.json')) {
+                        $config = json_decode(file_get_contents($template . '/config.json'), true);
+                    }
+                    $infoTemlate['config'] = $config;
+                    $arrTemplates[$infoTemlate['code']] = $infoTemlate;
+                }
+            }
+            return $arrTemplates;
+        }
+    }

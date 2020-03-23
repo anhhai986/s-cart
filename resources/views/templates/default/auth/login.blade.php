@@ -1,3 +1,10 @@
+@php
+/*
+$layout_page = shop_auth
+*/ 
+@endphp
+
+
 <h2>{{ trans('account.title_login') }}</h2>
 <form action="{{ route('postLogin') }}" method="post" class="box">
     {!! csrf_field() !!}

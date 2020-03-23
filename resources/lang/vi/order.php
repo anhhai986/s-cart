@@ -96,6 +96,7 @@ return [
   'add_new_title'        => 'Tạo đơn hàng',
   'add_new_des'          => 'Tạo mới một đơn hàng',
   'export_batch'         => 'Xuất',
+  'update_success' => 'Cập nhật thành công!',
   'export_batch_group'   => [
    'all'          => 'Tất cả',
    'current_page' => 'Trang hiện tại',
@@ -103,7 +104,7 @@ return [
   ],
   'delete_batch'         => 'Xóa',
   'refresh_batch'        => 'Làm mới',
-  'result_item'          => 'Showing <b>:item_from</b> to <b>:item_to</b> of <b>:item_total</b> items</b>',
+  'result_item'          => 'Hiển thị <b>:item_from</b> tới <b>:item_to</b> trong số <b>:item_total</b> kết quả</b>',
   'sort'                 => 'Sắp xếp',
   'sort_order'           => [
    'id_asc'     => 'ID asc',

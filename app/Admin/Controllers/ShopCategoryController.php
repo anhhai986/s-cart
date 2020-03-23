@@ -23,26 +23,24 @@ class ShopCategoryController extends Controller
     {
         $data = [
             'title' => trans('category.admin.list'),
-            'sub_title' => '',
+            'subTitle' => '',
             'icon' => 'fa fa-indent',
-            'menu_left' => '',
-            'menu_right' => '',
-            'menu_sort' => '',
-            'script_sort' => '',
-            'menu_search' => '',
-            'script_search' => '',
-            'listTh' => '',
-            'dataTr' => '',
-            'pagination' => '',
-            'result_items' => '',
-            'url_delete_item' => '',
+            'menuRight' => [],
+            'menuLeft' => [],
+            'topMenuRight' => [],
+            'topMenuLeft' => [],
+            'urlDeleteItem' => route('admin_category.delete'),
+            'removeList' => 1, // 1 - Enable function delete list item
+            'buttonRefresh' => 1, // 1 - Enable button refresh
+            'buttonSort' => 1, // 1 - Enable button sort
+            'css' => '', 
+            'js' => '',
         ];
 
         $listTh = [
-            'check_row' => '',
             'id' => trans('category.id'),
             'image' => trans('category.image'),
-            'name' => trans('category.name'),
+            'title' => trans('category.title'),
             'parent' => trans('category.parent'),
             'top' => trans('category.top'),
             'status' => trans('category.status'),
@@ -54,16 +52,16 @@ class ShopCategoryController extends Controller
         $arrSort = [
             'id__desc' => trans('category.admin.sort_order.id_desc'),
             'id__asc' => trans('category.admin.sort_order.id_asc'),
-            'name__desc' => trans('category.admin.sort_order.name_desc'),
-            'name__asc' => trans('category.admin.sort_order.name_asc'),
+            'title__desc' => trans('category.admin.sort_order.title_desc'),
+            'title__asc' => trans('category.admin.sort_order.title_asc'),
         ];
         $obj = new ShopCategory;
 
         $obj = $obj
-            ->leftJoin('shop_category_description', 'shop_category_description.category_id', 'shop_category.id')
-            ->where('shop_category_description.lang', sc_get_locale());
+            ->leftJoin(SC_DB_PREFIX.'shop_category_description', SC_DB_PREFIX.'shop_category_description.category_id', SC_DB_PREFIX.'shop_category.id')
+            ->where(SC_DB_PREFIX.'shop_category_description.lang', sc_get_locale());
         if ($keyword) {
-            $obj = $obj->whereRaw('(id = ' . (int) $keyword . ' OR shop_category_description.name like "%' . $keyword . '%" )');
+            $obj = $obj->whereRaw('(id = ' . (int) $keyword . ' OR '.SC_DB_PREFIX.'shop_category_description.title like "%' . $keyword . '%" )');
         }
         if ($sort_order && array_key_exists($sort_order, $arrSort)) {
             $field = explode('__', $sort_order)[0];
@@ -78,11 +76,10 @@ class ShopCategoryController extends Controller
         $dataTr = [];
         foreach ($dataTmp as $key => $row) {
             $dataTr[] = [
-                'check_row' => '<input type="checkbox" class="grid-row-checkbox" data-id="' . $row['id'] . '">',
                 'id' => $row['id'],
-                'image' => sc_image_render($row->getThumb(), '50px', '50px'),
-                'name' => $row['name'],
-                'parent' => $row['parent'] ? ($row->getParent() ? $row->getParent()['name'] : '') : 'ROOT',
+                'image' => sc_image_render($row->getThumb(), '50px', '50px', $row['title']),
+                'title' => $row['title'],
+                'parent' => $row['parent'] ? ($row->getParent() ? $row->getParent()['title'] : '') : 'ROOT',
                 'top' => $row['top'] ? '<span class="label label-success">ON</span>' : '<span class="label label-danger">OFF</span>',
                 'status' => $row['status'] ? '<span class="label label-success">ON</span>' : '<span class="label label-danger">OFF</span>',
                 'sort' => $row['sort'],
@@ -97,60 +94,27 @@ class ShopCategoryController extends Controller
         $data['listTh'] = $listTh;
         $data['dataTr'] = $dataTr;
         $data['pagination'] = $dataTmp->appends(request()->except(['_token', '_pjax']))->links('admin.component.pagination');
-        $data['result_items'] = trans('category.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
-//menu_left
-        $data['menu_left'] = '<div class="pull-left">
-                    <button type="button" class="btn btn-default grid-select-all"><i class="fa fa-square-o"></i></button> &nbsp;
+        $data['resultItems'] = trans('category.admin.result_item', ['item_from' => $dataTmp->firstItem(), 'item_to' => $dataTmp->lastItem(), 'item_total' => $dataTmp->total()]);
 
-                    <a class="btn   btn-flat btn-danger grid-trash" title="Delete"><i class="fa fa-trash-o"></i><span class="hidden-xs"> ' . trans('admin.delete') . '</span></a> &nbsp;
 
-                    <a class="btn   btn-flat btn-primary grid-refresh" title="Refresh"><i class="fa fa-refresh"></i><span class="hidden-xs"> ' . trans('admin.refresh') . '</span></a> &nbsp;</div>
-                    ';
-//=menu_left
+//menuRight
+        $data['menuRight'][] = '<a href="' . route('admin_category.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
+        <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
+        </a>';
+//=menuRight
 
-//menu_right
-        $data['menu_right'] = '
-                        <div class="btn-group pull-right" style="margin-right: 10px">
-                           <a href="' . route('admin_category.create') . '" class="btn  btn-success  btn-flat" title="New" id="button_create_new">
-                           <i class="fa fa-plus"></i><span class="hidden-xs">' . trans('admin.add_new') . '</span>
-                           </a>
-                        </div>
-
-                        ';
-//=menu_right
-
-//menu_sort
-
+//menuSort        
         $optionSort = '';
         foreach ($arrSort as $key => $status) {
             $optionSort .= '<option  ' . (($sort_order == $key) ? "selected" : "") . ' value="' . $key . '">' . $status . '</option>';
         }
 
-        $data['menu_sort'] = '
-                       <div class="btn-group pull-left">
-                        <div class="form-group">
-                           <select class="form-control" id="order_sort">
-                            ' . $optionSort . '
-                           </select>
-                         </div>
-                       </div>
+        $data['urlSort'] = route('admin_category.index');
+        $data['optionSort'] = $optionSort;
+//=menuSort
 
-                       <div class="btn-group pull-left">
-                           <a class="btn btn-flat btn-primary" title="Sort" id="button_sort">
-                              <i class="fa fa-sort-amount-asc"></i><span class="hidden-xs"> ' . trans('admin.sort') . '</span>
-                           </a>
-                       </div>';
-
-        $data['script_sort'] = "$('#button_sort').click(function(event) {
-      var url = '" . route('admin_category.index') . "?sort_order='+$('#order_sort option:selected').val();
-      $.pjax({url: url, container: '#pjax-container'})
-    });";
-
-//=menu_sort
-
-//menu_search
-
-        $data['menu_search'] = '
+//menuSearch        
+        $data['topMenuRight'][] = '
                 <form action="' . route('admin_category.index') . '" id="button_search">
                    <div onclick="$(this).submit();" class="btn-group pull-right">
                            <a class="btn btn-flat btn-primary" title="Refresh">
@@ -163,9 +127,7 @@ class ShopCategoryController extends Controller
                          </div>
                    </div>
                 </form>';
-//=menu_search
-
-        $data['url_delete_item'] = route('admin_category.delete');
+//=menuSearch
 
         return view('admin.screen.list')
             ->with($data);
@@ -179,7 +141,7 @@ class ShopCategoryController extends Controller
     {
         $data = [
             'title' => trans('category.admin.add_new_title'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => trans('category.admin.add_new_des'),
             'icon' => 'fa fa-plus',
             'languages' => $this->languages,
@@ -202,7 +164,7 @@ class ShopCategoryController extends Controller
         $data = request()->all();
 
         $langFirst = array_key_first(sc_language_all()->toArray()); //get first code language active
-        $data['alias'] = !empty($data['alias'])?$data['alias']:$data['descriptions'][$langFirst]['name'];
+        $data['alias'] = !empty($data['alias'])?$data['alias']:$data['descriptions'][$langFirst]['title'];
         $data['alias'] = sc_word_format_url($data['alias']);
         $data['alias'] = sc_word_limit($data['alias'], 100);
 
@@ -210,12 +172,12 @@ class ShopCategoryController extends Controller
             'image' => 'required',
             'parent' => 'required',
             'sort' => 'numeric|min:0',
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_category,alias|string|max:100',
-            'descriptions.*.name' => 'required|string|max:200',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_category,alias|string|max:100',
+            'descriptions.*.title' => 'required|string|max:200',
             'descriptions.*.keyword' => 'nullable|string|max:200',
             'descriptions.*.description' => 'nullable|string|max:300',
         ], [
-            'descriptions.*.name.required' => trans('validation.required', ['attribute' => trans('category.name')]),
+            'descriptions.*.title.required' => trans('validation.required', ['attribute' => trans('category.title')]),
             'alias.regex' => trans('category.alias_validate'),
         ]);
 
@@ -240,7 +202,7 @@ class ShopCategoryController extends Controller
             $dataDes[] = [
                 'category_id' => $id,
                 'lang' => $code,
-                'name' => $data['descriptions'][$code]['name'],
+                'title' => $data['descriptions'][$code]['title'],
                 'keyword' => $data['descriptions'][$code]['keyword'],
                 'description' => $data['descriptions'][$code]['description'],
             ];
@@ -262,7 +224,7 @@ class ShopCategoryController extends Controller
         }
         $data = [
             'title' => trans('category.admin.edit'),
-            'sub_title' => '',
+            'subTitle' => '',
             'title_description' => '',
             'icon' => 'fa fa-pencil-square-o',
             'languages' => $this->languages,
@@ -283,7 +245,7 @@ class ShopCategoryController extends Controller
         $data = request()->all();
 
         $langFirst = array_key_first(sc_language_all()->toArray()); //get first code language active
-        $data['alias'] = !empty($data['alias'])?$data['alias']:$data['descriptions'][$langFirst]['name'];
+        $data['alias'] = !empty($data['alias'])?$data['alias']:$data['descriptions'][$langFirst]['title'];
         $data['alias'] = sc_word_format_url($data['alias']);
         $data['alias'] = sc_word_limit($data['alias'], 100);
 
@@ -291,12 +253,12 @@ class ShopCategoryController extends Controller
             'image' => 'required',
             'parent' => 'required',
             'sort' => 'numeric|min:0',
-            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:shop_category,alias,' . $category->id . ',id|string|max:100',
-            'descriptions.*.name' => 'required|string|max:200',
+            'alias' => 'required|regex:/(^([0-9A-Za-z\-_]+)$)/|unique:'.SC_DB_PREFIX.'shop_category,alias,' . $category->id . ',id|string|max:100',
+            'descriptions.*.title' => 'required|string|max:200',
             'descriptions.*.keyword' => 'nullable|string|max:200',
             'descriptions.*.description' => 'nullable|string|max:300',
         ], [
-            'descriptions.*.name.required' => trans('validation.required', ['attribute' => trans('category.name')]),
+            'descriptions.*.title.required' => trans('validation.required', ['attribute' => trans('category.title')]),
             'alias.regex' => trans('category.alias_validate'),
         ]);
 
@@ -323,7 +285,7 @@ class ShopCategoryController extends Controller
             $dataDes[] = [
                 'category_id' => $id,
                 'lang' => $code,
-                'name' => $row['name'],
+                'title' => $row['title'],
                 'keyword' => $row['keyword'],
                 'description' => $row['description'],
             ];

@@ -31,8 +31,8 @@
                         <div class="form-group">
                             <label class="col-sm-2  control-label"></label>
                             <div class="col-sm-8">
-                                <b>{{ $language->title }}</b>
-                                {!! sc_image_render($language->icon,'20px','20px') !!}
+                                <b>{{ $language->name }}</b>
+                                {!! sc_image_render($language->icon,'20px','20px', $language->name) !!}
                             </div>
                         </div>
 
@@ -183,7 +183,7 @@
                         <div class="form-group  ">
                             <label for="status" class="col-sm-2  control-label">{{ trans('page.status') }}</label>
                             <div class="col-sm-8">
-                                <input type="checkbox" name="status"
+                                <input class="input" type="checkbox" name="status"
                                     {{ old('status',(empty($page['status'])?0:1))?'checked':''}}>
                             </div>
                         </div>
@@ -221,23 +221,15 @@
 @endsection
 
 @push('styles')
-{{-- switch --}}
-<link rel="stylesheet" href="{{ asset('admin/plugin/bootstrap-switch.min.css')}}">
-
 
 @endpush
 
 @push('scripts')
-<!--ckeditor-->
-<script src="{{ asset('packages/ckeditor/ckeditor.js') }}"></script>
-<script src="{{ asset('packages/ckeditor/adapters/jquery.js') }}"></script>
+@include('admin.component.ckeditor_js')
 
-{{-- switch --}}
-<script src="{{ asset('admin/plugin/bootstrap-switch.min.js')}}"></script>
 
-<script type="text/javascript">
-    $("[name='top'],[name='status']").bootstrapSwitch();
-</script>
+
+
 
 <script type="text/javascript">
     $('textarea.editor').ckeditor(

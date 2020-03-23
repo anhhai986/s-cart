@@ -31,21 +31,21 @@ class ShopCart extends GeneralController
     {
         session()->forget('paymentMethod'); //destroy paymentMethod
         session()->forget('shippingMethod'); //destroy shippingMethod
-
+        
         //Shipping
-        $moduleShipping = sc_get_extension('shipping');
-        $sourcesShipping = sc_get_all_plugin('Extensions', 'shipping');
+        $moduleShipping = sc_get_plugin_installed('shipping');
+        $sourcesShipping = sc_get_all_plugin('shipping');
         $shippingMethod = array();
         foreach ($moduleShipping as $module) {
             if (array_key_exists($module['key'], $sourcesShipping)) {
-                $moduleClass = sc_get_class_extension_config('shipping', $module['key']);
+                $moduleClass = sc_get_class_plugin_config('shipping', $module['key']);
                 $shippingMethod[$module['key']] = (new $moduleClass)->getData();
             }
         }
 
         //Payment
-        $modulePayment = sc_get_extension('payment');
-        $sourcesPayment = sc_get_all_plugin('Extensions', 'payment');
+        $modulePayment = sc_get_plugin_installed('payment');
+        $sourcesPayment = sc_get_all_plugin('payment');
         $paymentMethod = array();
         foreach ($modulePayment as $module) {
             if (array_key_exists($module['key'], $sourcesPayment)) {
@@ -55,8 +55,8 @@ class ShopCart extends GeneralController
         }        
 
         //Total
-        $moduleTotal = sc_get_extension('total');
-        $sourcesTotal = sc_get_all_plugin('Extensions', 'total');
+        $moduleTotal = sc_get_plugin_installed('total');
+        $sourcesTotal = sc_get_all_plugin('total');
         $totalMethod = array();
         foreach ($moduleTotal as $module) {
             if (array_key_exists($module['key'], $sourcesTotal)) {
@@ -65,16 +65,7 @@ class ShopCart extends GeneralController
             }
         } 
 
-
-        //====================================================
- 
-
-        $extensionDiscount = $totalMethod['Discount'] ?? '';
-        if (!empty(session('Discount'))) {
-            $hasCoupon = true;
-        } else {
-            $hasCoupon = false;
-        }
+        // Shipping address
         $user = auth()->user();
         if ($user) {
             $addressDefaul = [
@@ -104,22 +95,21 @@ class ShopCart extends GeneralController
             ];
         }
         $shippingAddress = session('shippingAddress') ? session('shippingAddress') : $addressDefaul;
+
+
         $objects = ShopOrderTotal::getObjectOrderTotal();
         return view(
-            $this->templatePath . '.shop_cart',
+            $this->templatePath . '.screen.shop_cart',
             [
                 'title' => trans('front.cart_title'),
                 'description' => '',
                 'keyword' => '',
-                'cart' => Cart::content(),
+                'cart' => Cart::instance('default')->content(),
                 'shippingMethod' => $shippingMethod,
                 'paymentMethod' => $paymentMethod,
                 'totalMethod' => $totalMethod,
                 'dataTotal' => ShopOrderTotal::processDataTotal($objects),
-                'hasCoupon' => $hasCoupon,
-                'extensionDiscount' => $extensionDiscount,
                 'shippingAddress' => $shippingAddress,
-                'uID' => $user->id ?? 0,
                 'layout_page' => 'shop_cart',
                 'countries' => ShopCountry::getArray(),
                 'attributesGroup' => ShopAttributeGroup::pluck('name', 'id')->all(),
@@ -132,7 +122,7 @@ class ShopCart extends GeneralController
      */
     public function processCart()
     {
-        if (Cart::count() == 0) {
+        if (Cart::instance('default')->count() == 0) {
             return redirect()->route('cart');
         }
 
@@ -141,10 +131,6 @@ class ShopCart extends GeneralController
             return redirect()->route('login');
         }
 
-        $messages = [
-            'max' => trans('validation.max.string'),
-            'required' => trans('validation.required'),
-        ];
         $validate = [
             'first_name' => 'required|max:100',
             'address1' => 'required|max:100',
@@ -169,7 +155,35 @@ class ShopCart extends GeneralController
         }
         if(sc_config('customer_company')) {
             $validate['company'] = 'required|min:3';
-        }        
+        }
+
+        $messages = [
+            'last_name.required' => trans('validation.required',['attribute'=> trans('cart.last_name')]),
+            'first_name.required' => trans('validation.required',['attribute'=> trans('cart.first_name')]),
+            'email.required' => trans('validation.required',['attribute'=> trans('cart.email')]),
+            'address1.required' => trans('validation.required',['attribute'=> trans('cart.address1')]),
+            'address2.required' => trans('validation.required',['attribute'=> trans('cart.address2')]),
+            'phone.required' => trans('validation.required',['attribute'=> trans('cart.phone')]),
+            'country.required' => trans('validation.required',['attribute'=> trans('cart.country')]),
+            'postcode.required' => trans('validation.required',['attribute'=> trans('cart.postcode')]),
+            'company.required' => trans('validation.required',['attribute'=> trans('cart.company')]),
+            'sex.required' => trans('validation.required',['attribute'=> trans('cart.sex')]),
+            'birthday.required' => trans('validation.required',['attribute'=> trans('cart.birthday')]),
+            'email.email' => trans('validation.email',['attribute'=> trans('cart.email')]),
+            'phone.regex' => trans('validation.regex',['attribute'=> trans('cart.phone')]),
+            'postcode.min' => trans('validation.min',['attribute'=> trans('cart.postcode')]),
+            'country.min' => trans('validation.min',['attribute'=> trans('cart.country')]),
+            'first_name.max' => trans('validation.max',['attribute'=> trans('cart.first_name')]),
+            'email.max' => trans('validation.max',['attribute'=> trans('cart.email')]),
+            'address1.max' => trans('validation.max',['attribute'=> trans('cart.address1')]),
+            'address2.max' => trans('validation.max',['attribute'=> trans('cart.address2')]),
+            'last_name.max' => trans('validation.max',['attribute'=> trans('cart.last_name')]),
+            'birthday.date' => trans('validation.date',['attribute'=> trans('cart.birthday')]),
+            'birthday.date_format' => trans('validation.date_format',['attribute'=> trans('cart.birthday')]),
+            'shippingMethod.required' => trans('cart.validation.shippingMethod_required'),
+            'paymentMethod.required' => trans('cart.validation.paymentMethod_required'),
+        ];
+
         $v = Validator::make(
             request()->all(), 
             $validate, 
@@ -218,17 +232,17 @@ class ShopCart extends GeneralController
         ) {
             return redirect()->route('cart');
         }
-        //====================================================
+
         $paymentMethod = session('paymentMethod');
         $shippingMethod = session('shippingMethod');
         $shippingAddress = session('shippingAddress');
 
         //Shipping
-        $classShippingMethod = sc_get_class_extension_config('Shipping', $shippingMethod);
+        $classShippingMethod = sc_get_class_plugin_config('Shipping', $shippingMethod);
         $shippingMethodData = (new $classShippingMethod)->getData();
 
         //Payment
-        $classPaymentMethod = sc_get_class_extension_config('Payment', $paymentMethod);
+        $classPaymentMethod = sc_get_class_plugin_config('Payment', $paymentMethod);
         $paymentMethodData = (new $classPaymentMethod)->getData();
 
         $objects = ShopOrderTotal::getObjectOrderTotal();
@@ -238,24 +252,23 @@ class ShopCart extends GeneralController
         session(['dataTotal' => $dataTotal]);
 
         return view(
-            $this->templatePath . '.shop_checkout',
+            $this->templatePath . '.screen.shop_checkout',
             [
                 'title' => trans('front.checkout_title'),
-                'description' => '',
-                'keyword' => '',
-                'cart' => Cart::content(),
+                'cart' => Cart::instance('default')->content(),
                 'dataTotal' => $dataTotal,
                 'paymentMethodData' => $paymentMethodData,
                 'shippingMethodData' => $shippingMethodData,
                 'shippingAddress' => $shippingAddress,
                 'attributesGroup' => ShopAttributeGroup::getList(),
+                'layout_page' =>'shop_cart',
             ]
         );
     }
 
     /**
-     * add to cart by post, always use page product detail
-     * @return [type]           [description]
+     * add to cart by post, always use in the product page detail
+     * @return [redirect]
      */
     public function addToCart()
     {
@@ -263,7 +276,7 @@ class ShopCart extends GeneralController
         $product_id = $data['product_id'];
         $form_attr = $data['form_attr'] ?? null;
         $qty = $data['qty'];
-        $product = ShopProduct::find($product_id);
+        $product = (new ShopProduct)->getDetail($product_id);
         if ($product->allowSale()) {
             $options = array();
             $options = $form_attr;
@@ -276,7 +289,7 @@ class ShopCart extends GeneralController
             if ($options) {
                 $dataCart['options'] = $options;
             }
-            Cart::add($dataCart);
+            Cart::instance('default')->add($dataCart);
             return redirect()->route('cart')
                 ->with(
                     ['message' => trans('cart.success', ['instance' => 'cart'])]
@@ -291,25 +304,27 @@ class ShopCart extends GeneralController
     }
 
     /**
-     * Add new order
+     * Create new order
+     * @return [redirect]
      */
     public function addOrder(Request $request)
     {
-        if (Cart::count() == 0) {
+        if (Cart::instance('default')->count() == 0) {
             return redirect()->route('home');
         }
         //Not allow for guest
         if (!sc_config('shop_allow_guest') && !auth()->user()) {
             return redirect()->route('login');
         } //
+
         $data = request()->all();
         if (!$data) {
             return redirect()->route('cart');
         } else {
             $dataTotal = session('dataTotal') ?? [];
             $shippingAddress = session('shippingAddress') ?? [];
-            $payment_method = session('paymentMethod') ?? '';
-            $shipping_method = session('shippingMethod') ?? '';
+            $paymentMethod = session('paymentMethod') ?? '';
+            $shippingMethod = session('shippingMethod') ?? '';
         }
 
         $uID = auth()->user()->id ?? 0;
@@ -342,15 +357,15 @@ class ShopCart extends GeneralController
         $dataOrder['phone'] = $shippingAddress['phone'];
         $dataOrder['postcode'] = $shippingAddress['postcode']??null;
         $dataOrder['company'] = $shippingAddress['company']??null;
-        $dataOrder['payment_method'] = $payment_method;
-        $dataOrder['shipping_method'] = $shipping_method;
+        $dataOrder['payment_method'] = $paymentMethod;
+        $dataOrder['shipping_method'] = $shippingMethod;
         $dataOrder['comment'] = $shippingAddress['comment'];
         $dataOrder['user_agent'] = $request->header('User-Agent');
         $dataOrder['ip'] = $request->ip();
         $dataOrder['created_at'] = date('Y-m-d H:i:s');
 
         $arrCartDetail = [];
-        foreach (Cart::content() as $cartItem) {
+        foreach (Cart::instance('default')->content() as $cartItem) {
             $arrDetail['product_id'] = $cartItem->id;
             $arrDetail['name'] = $cartItem->name;
             $arrDetail['price'] = sc_currency_value($cartItem->price);
@@ -374,15 +389,16 @@ class ShopCart extends GeneralController
         session(['orderID' => $createOrder['orderID']]);
 
 
-        $paymentMethod = sc_get_class_extension_controller('Payment', session('paymentMethod'));
+        $paymentMethod = sc_get_class_plugin_controller('Payment', session('paymentMethod'));
 
         return (new $paymentMethod)->processOrder();
 
     }
 
     /**
-     * [addToCartAjax description]
+     * Add product to cart
      * @param Request $request [description]
+     * @return [json]
      */
     public function addToCartAjax(Request $request)
     {
@@ -393,7 +409,7 @@ class ShopCart extends GeneralController
         $cart = \Cart::instance($instance);
 
         $id = request('id');
-        $product = ShopProduct::find($id);
+        $product = (new ShopProduct)->getDetail($id);
         $html = '';
         switch ($instance) {
             case 'default':
@@ -409,6 +425,7 @@ class ShopCart extends GeneralController
                     );
                 }
 
+                //Check product allow fot sale
                 if ($product->allowSale()) {
                     $cart->add(
                         array(
@@ -462,32 +479,13 @@ class ShopCart extends GeneralController
         }
 
         $carts = \Cart::getListCart($instance);
-        if ($instance == 'default' && $carts['count']) {
-            $html .= '<div><div class="shopping-cart-list">';
-            foreach ($carts['items'] as $item) {
-                $html .= '<div class="product product-widget"><div class="product-thumb">';
-                $html .= '<img src="' . $item['image'] . '" alt="">';
-                $html .= '</div>';
-                $html .= '<div class="product-body">';
-                $html .= '<h3 class="product-price">' . $item['price'] . ' <span class="qty">x' . $item['qty'] . '</span></h3>';
-                $html .= '<h2 class="product-name"><a href="' . $item['url'] . '">' . $item['name'] . '</a></h2>';
-                $html .= '</div>';
-                $html .= '<a href="' . route("cart.remove", ['id' => $item['rowId']]) . '"><button class="cancel-btn"><i class="fa fa-trash"></i></button></a>';
-                $html .= '</div>';
-            }
-            $html .= '</div></div>';
-            $html .= '<div class="shopping-cart-btns">
-                    <a href="' . route('cart') . '"><button class="main-btn">' . trans('front.cart_title') . '</button></a>
-                    <a href="' . route('checkout') . '"><button class="primary-btn">' . trans('front.checkout_title') . ' <i class="fa fa-arrow-circle-right"></i></button></a>
-                  </div>';
-        }
+
         return response()->json(
             [
                 'error' => 0,
                 'count_cart' => $carts['count'],
                 'instance' => $instance,
                 'subtotal' => $carts['subtotal'],
-                'html' => $html,
                 'msg' => trans('cart.success', ['instance' => ($instance == 'default') ? 'cart' : $instance]),
             ]
         );
@@ -495,9 +493,9 @@ class ShopCart extends GeneralController
     }
 
     /**
-     * [updateToCart description]
+     * Update product to cart
      * @param  Request $request [description]
-     * @return [type]           [description]
+     * @return [json]
      */
     public function updateToCart(Request $request)
     {
@@ -506,7 +504,7 @@ class ShopCart extends GeneralController
         }
         $id = request('id');
         $rowId = request('rowId');
-        $product = ShopProduct::find($id);
+        $product = (new ShopProduct)->getDetail($id);
         $new_qty = request('new_qty');
         if ($product->stock < $new_qty && !sc_config('product_buy_out_of_stock')) {
             return response()->json(
@@ -516,7 +514,7 @@ class ShopCart extends GeneralController
                 ]
             );
         } else {
-            Cart::update($rowId, ($new_qty) ? $new_qty : 0);
+            Cart::instance('default')->update($rowId, ($new_qty) ? $new_qty : 0);
             return response()->json(
                 [
                     'error' => 0,
@@ -527,55 +525,56 @@ class ShopCart extends GeneralController
     }
 
     /**
-     * [wishlist description]
-     * @return [type] [description]
+     * Get product in wishlist
+     * @return [view]
      */
     public function wishlist()
     {
 
         $wishlist = Cart::instance('wishlist')->content();
-        return view($this->templatePath . '.shop_wishlist',
+        return view($this->templatePath . '.screen.shop_wishlist',
             array(
                 'title' => trans('front.wishlist'),
                 'description' => '',
                 'keyword' => '',
                 'wishlist' => $wishlist,
-                'layout_page' => 'shop_wishlist',
+                'layout_page' => 'shop_cart',
             )
         );
     }
 
     /**
-     * [compare description]
-     * @return [type] [description]
+     * Get product in compare
+     * @return [view]
      */
     public function compare()
     {
         $compare = Cart::instance('compare')->content();
-        return view($this->templatePath . '.shop_compare',
+
+        return view($this->templatePath . '.screen.shop_compare',
             array(
                 'title' => trans('front.compare'),
                 'description' => '',
                 'keyword' => '',
                 'compare' => $compare,
-                'layout_page' => 'product_compare',
+                'layout_page' => 'shop_cart',
             )
         );
     }
 
     /**
-     * [clearCart description]
-     * @return [type] [description]
+     * Clear all cart
+     * @return [redirect]
      */
-    public function clearCart()
+    public function clearCart($instance = 'default')
     {
-        Cart::destroy();
+        Cart::instance($instance)->destroy();
         return redirect()->route('cart');
     }
 
     /**
      * Remove item from cart
-     * @author Naruto
+     * @return [redirect]
      */
     public function removeItem($id = null)
     {
@@ -583,16 +582,16 @@ class ShopCart extends GeneralController
             return redirect()->route('cart');
         }
 
-        if (array_key_exists($id, Cart::content()->toArray())) {
-            Cart::remove($id);
+        if (array_key_exists($id, Cart::instance('default')->content()->toArray())) {
+            Cart::instance('default')->remove($id);
         }
         return redirect()->route('cart');
     }
 
     /**
-     * [removeItem_wishlist description]
-     * @param  [type] $id [description]
-     * @return [type]     [description]
+     * Remove item from wishlist
+     * @param  [string | null] $id
+     * @return [redirect]
      */
     public function removeItemWishlist($id = null)
     {
@@ -607,9 +606,9 @@ class ShopCart extends GeneralController
     }
 
     /**
-     * [removeItemCompare description]
-     * @param  [type] $id [description]
-     * @return [type]     [description]
+     * Remove item from compare
+     * @param  [string | null] $id
+     * @return [redirect]
      */
     public function removeItemCompare($id = null)
     {
@@ -626,7 +625,7 @@ class ShopCart extends GeneralController
     /**
      * Complete order
      *
-     * @return  [type]  [return description]
+     * @return [redirect]
      */
     public function completeOrder()
     {
@@ -636,21 +635,44 @@ class ShopCart extends GeneralController
         }
         Cart::destroy(); // destroy cart
 
+        $paymentMethod = session('paymentMethod');
+        $shippingMethod = session('shippingMethod');
+        $totalMethod = session('totalMethod', []);
+
+        $classPaymentConfig = sc_get_class_plugin_config('Payment', $paymentMethod);
+        if(method_exists($classPaymentConfig,'endApp')) {
+            (new $classPaymentConfig)->endApp();
+        }
+
+        $classShippingConfig = sc_get_class_plugin_config('Shipping', $shippingMethod);
+        if(method_exists($classShippingConfig,'endApp')) {
+            (new $classShippingConfig)->endApp();
+        }
+
+        if($totalMethod && is_array($totalMethod)) {
+            foreach ($totalMethod as $keyMethod => $valueMethod) {
+                $classTotalConfig = sc_get_class_plugin_config('Total', $keyMethod);
+                if(method_exists($classTotalConfig,'endApp')) {
+                    (new $classTotalConfig)->endApp(['orderID' => $orderID, 'code' => $valueMethod]);
+                }
+            }
+        }
+
         session()->forget('paymentMethod'); //destroy paymentMethod
         session()->forget('shippingMethod'); //destroy shippingMethod
         session()->forget('totalMethod'); //destroy totalMethod
         session()->forget('otherMethod'); //destroy otherMethod
-        session()->forget('Discount'); //destroy Discount
         session()->forget('dataTotal'); //destroy dataTotal
         session()->forget('dataOrder'); //destroy dataOrder
         session()->forget('arrCartDetail'); //destroy arrCartDetail
-        session()->forget('orderID'); //destroy arrCartDetail
+        session()->forget('orderID'); //destroy orderID
 
         if (sc_config('order_success_to_admin') || sc_config('order_success_to_customer')) {
             $data = ShopOrder::with('details')->find($orderID)->toArray();
             $checkContent = (new ShopEmailTemplate)->where('group', 'order_success_to_admin')->where('status', 1)->first();
             $checkContentCustomer = (new ShopEmailTemplate)->where('group', 'order_success_to_customer')->where('status', 1)->first();
             if ($checkContent || $checkContentCustomer) {
+
                 $orderDetail = '';
                 $orderDetail .= '<tr>
                                     <td>' . trans('email.order.sort') . '</td>
@@ -717,7 +739,7 @@ class ShopCart extends GeneralController
                         'to' => sc_store('email'),
                         'subject' => trans('order.send_mail.new_title') . '#' . $orderID,
                     ];
-                    sc_send_mail('mail.order_success_to_admin', $data_mail, $config, []);
+                    sc_send_mail($this->templatePath . '.mail.order_success_to_admin', $data_mail, $config, []);
                 }
                 if (sc_config('order_success_to_customer') && $checkContentCustomer) {
                     $contentCustomer = $checkContentCustomer->text;
@@ -730,7 +752,7 @@ class ShopCart extends GeneralController
                         'replyTo' => sc_store('email'),
                         'subject' => trans('order.send_mail.new_title'),
                     ];
-                    sc_send_mail('mail.order_success_to_customer', $data_mail_customer, $config, []);
+                    sc_send_mail($this->templatePath . '.mail.order_success_to_customer', $data_mail_customer, $config, []);
                 }
             }
 
@@ -742,7 +764,7 @@ class ShopCart extends GeneralController
     /**
      * Page order success
      *
-     * @return  [type]  [return description]
+     * @return  [view]
      */
     public function orderSuccess(){
 
@@ -750,10 +772,10 @@ class ShopCart extends GeneralController
             return redirect()->route('home');
         }
         return view(
-            $this->templatePath . '.shop_order_success',
+            $this->templatePath . '.screen.shop_order_success',
             [
                 'title' => trans('order.success.title'),
-                'layout_page' =>'shop_order_success',
+                'layout_page' =>'shop_cart',
             ]
         );
     }

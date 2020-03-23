@@ -34,8 +34,8 @@ class ForgotPasswordController extends GeneralController
     }
 
     /**
-     * [login description]
-     * @return [type] [description]
+     * Form forgot password
+     * @return [view] 
      */
     public function showLinkRequestForm()
     {
@@ -45,6 +45,7 @@ class ForgotPasswordController extends GeneralController
         return view($this->templatePath . '.auth.forgot',
             array(
                 'title' => trans('front.forgot_password'),
+                'layout_page' => 'shop_auth',
             )
         );
     }

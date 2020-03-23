@@ -96,6 +96,7 @@ return [
         'add_new_title'        => 'Add new order',
         'add_new_des'          => 'Create a new order',
         'export_batch'         => 'Export',
+        'update_success'         => 'Update success!',
         'export_batch_group'   => [
             'all'          => 'All',
             'current_page' => 'Current page',

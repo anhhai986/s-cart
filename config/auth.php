@@ -46,7 +46,7 @@ return [
         ],
 
         'api'   => [
-            'driver'   => 'token',
+            'driver'   => 'passport',
             'provider' => 'users',
         ],
     ],
@@ -97,7 +97,12 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
-            'table'    => 'password_resets',
+            'table'    => env('DB_PREFIX', '').'shop_password_resets',
+            'expire'   => 60,
+        ],
+        'admins' => [
+            'provider' => 'admins',
+            'table'    => env('DB_PREFIX', '').'admin_password_resets',
             'expire'   => 60,
         ],
     ],

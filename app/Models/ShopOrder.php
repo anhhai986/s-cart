@@ -8,11 +8,19 @@ use App\Models\ShopOrderTotal;
 use App\Models\ShopProduct;
 use DB;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ModelTrait;
 
 class ShopOrder extends Model
 {
-    public $table = 'shop_order';
+    use ModelTrait;
+
+    public $table = SC_DB_PREFIX.'shop_order';
     protected $guarded = [];
+    protected $connection = SC_CONNECTION;
+
+    protected  $sc_order_profile = 0; // 0: all, 1: only user's order
+
+
     public static $mapStyleStatus = [
         '1' => 'info', //new
         '2' => 'primary', //processing
@@ -109,17 +117,17 @@ class ShopOrder extends Model
         return $query->orderBy('id', 'desc');
     }
 
-/**
- * Create new order
- * @param  [array] $dataOrder
- * @param  [array] $dataTotal
- * @param  [array] $arrCartDetail
- * @return [array]
- */
+    /**
+     * Create new order
+     * @param  [array] $dataOrder
+     * @param  [array] $dataTotal
+     * @param  [array] $arrCartDetail
+     * @return [array]
+     */
     public function createOrder($dataOrder, $dataTotal, $arrCartDetail)
     {
         try {
-            DB::connection('mysql')->beginTransaction();
+            DB::connection(SC_CONNECTION)->beginTransaction();
             $uID = sc_clean($dataOrder['user_id']);
             $currency = sc_clean($dataOrder['currency']);
             $exchange_rate = sc_clean($dataOrder['exchange_rate']);
@@ -200,7 +208,7 @@ class ShopOrder extends Model
             $codeDiscount = session('Discount') ?? '';
             if ($codeDiscount) {
                 if (!empty(sc_config('Discount'))) {
-                    $moduleClass = sc_get_class_extension_controller($code = 'Total', $key = 'Discount');
+                    $moduleClass = sc_get_class_plugin_controller($code = 'Total', $key = 'Discount');
                     $returnModuleDiscount = (new $moduleClass)->apply($codeDiscount, $uID, $msg = 'Order #' . $orderID);
                     $arrReturnModuleDiscount = json_decode($returnModuleDiscount, true);
                     if ($arrReturnModuleDiscount['error'] == 1) {
@@ -225,10 +233,10 @@ class ShopOrder extends Model
             }
             // End process Discount
 
-            DB::connection('mysql')->commit();
+            DB::connection(SC_CONNECTION)->commit();
             $return = ['error' => 0, 'orderID' => $orderID, 'msg' => ""];
         } catch (\Exception $e) {
-            DB::connection('mysql')->rollBack();
+            DB::connection(SC_CONNECTION)->rollBack();
             $return = ['error' => 1, 'msg' => $e->getMessage()];
         }
         return $return;
@@ -251,4 +259,144 @@ class ShopOrder extends Model
     {
         return ShopOrderDetail::create($dataDetail);
     }
+
+
+    /**
+     * Start new process get data
+     *
+     * @return  new model
+     */
+    public function start() {
+        if($this->sc_order_profile) {
+            $obj = (new ShopOrder);
+            $obj->sc_order_profile = 1;
+            return $obj;
+        } else {
+            return new ShopOrder;
+        }
+    }
+
+    /**
+     * Get order detail
+     *
+     * @param   [int]  $orderID 
+     *
+     */
+    public function getDetail($orderID)
+    {
+        if(empty($orderID)) {
+            return null;
+        }
+        if(auth()->user()) {
+            return $this->where('id', $orderID)
+            ->where('user_id', auth()->user()->id)
+            ->first();
+        } else {
+            return null;
+        }
+
+    }
+
+    /**
+     * Disable only user's order mode
+     */
+    public function setOrderProfileOff() {
+        $this->sc_order_profile = 1;
+        return $this;
+    }
+
+    public function profile() {
+        $this->setOrderProfileOff();
+        return $this;
+    }
+
+    /**
+     * Get list order new
+     */
+    public function getOrderNew() {
+        $this->sc_status = 1;
+        return $this;
+    }
+
+    /**
+     * Get list order processing
+     */
+    public function getOrderProcessing() {
+        $this->sc_status = 2;
+        return $this;
+    }
+
+    /**
+     * Get list order hold
+     */
+    public function getOrderHold() {
+        $this->sc_status = 3;
+        return $this;
+    }
+
+    /**
+     * Get list order canceld
+     */
+    public function getOrderCanceled() {
+        $this->sc_status = 4;
+        return $this;
+    }
+
+    /**
+     * Get list order done
+     */
+    public function getOrderDone() {
+        $this->sc_status = 5;
+        return $this;
+    }
+
+    /**
+     * Get list order failed
+     */
+    public function getOrderFailed() {
+        $this->sc_status = 6;
+        return $this;
+    }
+
+    /**
+     * build Query
+     */
+    public function buildQuery() {
+        if ($this->sc_order_profile == 1) {
+            if(!auth()->user()) {
+                return null;
+            }
+            $uID = auth()->user()->id;
+            $query = $this->with('orderTotal')->where('user_id', $uID);
+        } else {
+            $query = $this->with('orderTotal')->with('details');
+        }
+
+        if ($this->sc_status !== 'all') {
+            $query = $query->where('status', $this->sc_status);
+        }
+
+        if (count($this->sc_moreWhere)) {
+            foreach ($this->sc_moreWhere as $key => $where) {
+                if(count($where)) {
+                    $query = $query->where($where[0], $where[1], $where[2]);
+                }
+            }
+        }
+
+        if ($this->random) {
+            $query = $query->inRandomOrder();
+        } else {
+            if (is_array($this->sc_sort) && count($this->sc_sort)) {
+                foreach ($this->sc_sort as  $rowSort) {
+                    if(is_array($rowSort) && count($rowSort) == 2) {
+                        $query = $query->sort($rowSort[0], $rowSort[1]);
+                    }
+                }
+            }
+        }
+
+        return $query;
+    }
+
 }
