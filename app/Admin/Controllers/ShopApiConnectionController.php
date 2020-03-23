@@ -97,7 +97,7 @@ class ShopApiConnectionController extends Controller
 //=menuSort
 
         $data['menuLeft'][] = '<input id="api_connection_required" type="checkbox"  '.(sc_config('api_connection_required')?'checked':'').'><br> '.trans('api_connection.api_connection_required_help');
-        $urlUpdate = route('admin_store_value.update');
+        $urlUpdate = route('admin_setting.update');
         $csrf_token = csrf_token();
         $data['js'] = <<< JS
         <script type="text/javascript">

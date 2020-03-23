@@ -10,7 +10,7 @@
             <li class="pull-right">{!! trans('admin.template_more') !!}</li>
           </ul>
             <!-- /.box-header -->
-            <div class="box-body" id="pjax-container">
+            <div class="box-body table-responsive no-padding" id="pjax-container">
              <table id="main-table" class="table table-bordered table-hover">
                 <thead>
                 <tr>

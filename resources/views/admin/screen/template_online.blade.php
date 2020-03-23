@@ -11,7 +11,7 @@
           </ul>
             <!-- /.box-header -->
           <section id="pjax-container" class="table-list">
-            <div class="box-body"   id="pjax-container">
+            <div class="box-body table-responsive no-padding">
               <table id="plugin" class="table table-bordered table-hover">
                 <thead>
                 <tr>
