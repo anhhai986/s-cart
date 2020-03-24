@@ -63,9 +63,8 @@ class ShopTemplateOnlineController extends Controller
 
         $unzip = sc_unzip(storage_path('tmp/'.$fileTmp), storage_path('tmp/'.$pathTmp));
         if($unzip) {
-            File::copyDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/public'), public_path('templates'));
-            File::deleteDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/public'));
-            File::copyDirectory(storage_path('tmp/'.$pathTmp), resource_path('views/templates'));
+            File::copyDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/public'), public_path('templates/'.$key));
+            File::copyDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/views'), resource_path('views/templates/'.$key));
             File::deleteDirectory(storage_path('tmp/'.$pathTmp));
             Storage::disk('tmp')->delete($fileTmp);
         } else {

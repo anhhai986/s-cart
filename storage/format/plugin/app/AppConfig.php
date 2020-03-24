@@ -10,19 +10,19 @@ use App\Models\AdminConfig;
 use App\Plugins\ConfigDefault;
 class AppConfig extends ConfigDefault
 {
+    public $configGroup = 'Plugins';
     public $configCode = 'Plugin_Code';
     public $configKey = 'Plugin_Key';
-    public $configGroup = 'Plugins';
     public $pathPlugin;
     
     public function __construct()
     {
         $this->pathPlugin = $this->configGroup . '/' . $this->configCode . '/' . $this->configKey;
         $this->title = trans($this->pathPlugin.'::lang.title');
-        $this->image = '';
+        $this->image = $this->pathPlugin.'/images/logo.jpg';
         $this->version = '1.0';
         $this->auth = 'Your name';
-        $this->link = 'Your link';
+        $this->link = 'http://Your-link.com';
 
     }
 
@@ -31,13 +31,13 @@ class AppConfig extends ConfigDefault
         $return = ['error' => 0, 'msg' => ''];
         $check = AdminConfig::where('key', $this->configKey)->first();
         if ($check) {
-            $return = ['error' => 1, 'msg' => 'Module exist'];
+            $return = ['error' => 1, 'msg' => 'Plugin exist'];
         } else {
             $process = AdminConfig::insert(
                 [
+                    'group' => $this->configGroup,
                     'code' => $this->configCode,
                     'key' => $this->configKey,
-                    'group' => $this->configGroup,
                     'sort' => 0,
                     'value' => self::ON, //Enable extension
                     'detail' => $this->pathPlugin.'::lang.title',

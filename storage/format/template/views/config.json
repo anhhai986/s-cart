@@ -3,9 +3,9 @@ Format template for S-Cart 4.x
 */
 {
     "name": "Template name",
-    "image": "Image path",
+    "image": "images/logo.jpg",
     "auth": "Your name",
-    "email": "Your email",
-    "website": "Your link",
+    "email": "Your-email@email.com",
+    "website": "http://Your-link.com",
     "version": "1.0.0"
 }

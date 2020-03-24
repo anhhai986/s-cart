@@ -8,16 +8,16 @@ use App\Models\AdminConfig;
 use App\Plugins\ConfigDefault;
 class AppConfig extends ConfigDefault
 {
+    public $configGroup = 'Plugins';
     public $configCode = 'Total';
     public $configKey = 'Discount';
-    public $configGroup = 'Plugins';
     public $pathPlugin;
     
     public function __construct()
     {
         $this->pathPlugin = $this->configGroup . '/' . $this->configCode . '/' . $this->configKey;
         $this->title = trans($this->pathPlugin.'::lang.title');
-        $this->image = 'images/' . $this->pathPlugin . '.png';
+        $this->image = '';
         $this->separator = false;
         $this->suffix = false;
         $this->prefix = false;
