@@ -1,11 +1,11 @@
 <?php
-#app/Http/Admin/Controllers/ShopTemplateOnlineController.php
+#app/Http/Admin/Controllers/AdminTemplateOnlineController.php
 namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-class ShopTemplateOnlineController extends Controller
+class AdminTemplateOnlineController extends Controller
 {
     public function index()
     {
