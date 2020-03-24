@@ -90,6 +90,8 @@ Option 1: **From composer**
 composer create-project lanhktc/s-cart
 ```
 Step2: Set writable permissions for the following directories: 
+=======
+
 Option 2: **From github**
 ```
 gitclone https://github.com/lanhktc/s-cart.git s-cart

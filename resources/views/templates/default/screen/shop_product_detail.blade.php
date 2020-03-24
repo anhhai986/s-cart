@@ -189,7 +189,7 @@ $productRelation: no paginate
                       </div>
                     </div>
                   </div>
-                @if ($key % 4 == 3)
+                @if ($key % 4 == 3 || ($key + 1) == $productRelation->count())
                   </div>
                 @endif
                @endforeach

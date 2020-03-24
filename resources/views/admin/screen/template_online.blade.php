@@ -36,27 +36,27 @@
                       </td>
                     </tr>
                   @else
-                    @foreach ($arrTemplateLibrary as  $plugin)
+                    @foreach ($arrTemplateLibrary as  $template)
                     @php
-                      if (array_key_exists($plugin['key'], $arrTemplateLocal)) {
-                        $pluginAction = trans('template.located');
+                      if (array_key_exists($template['key'], $arrTemplateLocal)) {
+                        $templateAction = trans('template.located');
                       } else {
-                        $pluginAction = '<span onClick="installTemplate($(this),\''.$plugin['key'].'\', \''.$plugin['path'].'\');" title="'.trans('template.install').'" type="button" class="btn btn-flat btn-success"><i class="fa fa-plus-circle"></i></span>';
+                        $templateAction = '<span onClick="installTemplate($(this),\''.$template['key'].'\', \''.$template['path'].'\');" title="'.trans('template.install').'" type="button" class="btn btn-flat btn-success"><i class="fa fa-plus-circle"></i></span>';
                       }
                     @endphp
 
                       <tr>
-                        <td>{!! sc_image_render($plugin['image'],'50px', '', $plugin['name']) !!}</td>
-                        <td>{{ $plugin['key'] }}</td>
-                        <td>{{ $plugin['name'] }} <span data-toggle="tooltip" title="{!! $plugin['description'] !!}"><i class="fa fa-info-circle" aria-hidden="true"></i></span></td>
-                        <td>{{ $plugin['version']??'' }}</td>
-                        <td>{{ $plugin['auth']??'' }}</td>
-                        <td><a target=_new href="{{ $plugin['link'] }}"><i class="fa fa-chain-broken" aria-hidden="true"></i> {!! trans('template.link') !!}</a></td>
-                        <td>{!! $plugin['price']? $plugin['price']:'<span class="label label-success">'.trans('template.free').'</span>' !!}</td>
+                        <td>{!! sc_image_render($template['image'],'50px', '', $template['name']) !!}</td>
+                        <td>{{ $template['key'] }}</td>
+                        <td>{{ $template['name'] }} <span data-toggle="tooltip" title="{!! $template['description'] !!}"><i class="fa fa-info-circle" aria-hidden="true"></i></span></td>
+                        <td>{{ $template['version']??'' }}</td>
+                        <td>{{ $template['auth']??'' }}</td>
+                        <td><a target=_new href="{{ $template['link'] }}"><i class="fa fa-chain-broken" aria-hidden="true"></i> {!! trans('template.link') !!}</a></td>
+                        <td>{!! $template['price']? $template['price']:'<span class="label label-success">'.trans('template.free').'</span>' !!}</td>
                         <td>
                           @php
-                          $vote = $plugin['rate']['point'];
-                          $vote_times = $plugin['rate']['times'];
+                          $vote = $template['rate']['point'];
+                          $vote_times = $template['rate']['times'];
                           $cal_vote = $vote_times?round($vote/$vote_times,1):0;
                           @endphp
                           <span title="{{ $cal_vote }}" style="color:#e66c16">
@@ -77,9 +77,9 @@
                         </span>
 
                         </td>
-                        <td>{{ $plugin['downloaded']??'' }}</td>
-                        <td>{{ $plugin['date']??'' }}</td>
-                        <td>{!! $pluginAction ?? '' !!}</td>
+                        <td>{{ $template['downloaded']??'' }}</td>
+                        <td>{{ $template['date']??'' }}</td>
+                        <td>{!! $templateAction ?? '' !!}</td>
                       </tr>
                     @endforeach
                   @endif

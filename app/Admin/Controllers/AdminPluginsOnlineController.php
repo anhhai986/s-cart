@@ -67,18 +67,23 @@ class AdminPluginsOnlineController extends Controller
     {
         $code = request('code');
         $key = request('key');
+        $pathPlugin = 'Plugins/'.$code.'/'.$key;
         $path = request('path');
         try {
             $data = file_get_contents($path);
-            $downloadTmp = $code.'_'.$key.'_'.time().'.zip';
-            Storage::disk('tmp')->put($downloadTmp, $data);
+            $pathTmp = $code.'_'.$key.'_'.time();
+            $fileTmp = $pathTmp.'.zip';
+            Storage::disk('tmp')->put($fileTmp, $data);
         } catch(\Exception $e) {
             $response = ['error' => 1, 'msg' => $e->getMessage()];
         }
+        $unzip = sc_unzip(storage_path('tmp/'.$fileTmp), storage_path('tmp/'.$pathTmp));
 
-        $unzip = sc_unzip(storage_path('tmp/'.$downloadTmp), app_path('/Plugins/'));
         if($unzip) {
-            Storage::disk('tmp')->delete($downloadTmp);
+            File::copyDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/public'), public_path($pathPlugin));
+            File::copyDirectory(storage_path('tmp/'.$pathTmp.'/'.$key.'/app'), app_path($pathPlugin));
+            File::deleteDirectory(storage_path('tmp/'.$pathTmp));
+            Storage::disk('tmp')->delete($fileTmp);
             $namespace = sc_get_class_plugin_config($code, $key);
             $response = (new $namespace)->install();
         } else {
