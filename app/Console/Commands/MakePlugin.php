@@ -73,19 +73,20 @@ class MakePlugin extends Command
         $source = "format/template/views";
         $sourcePublic = "format/template/public";
         $sID = md5(time());
-        $tmp = $this->tmpFolder."/".$sID.'/'.$name;
+        $tmp = $this->tmpFolder."/".$sID.'/'.$name.'/views';
+        $tmpPublic = $this->tmpFolder."/".$sID.'/'.$name.'/public';
         $description = "views/templates/".$name;
-        $descriptionAsset = "public/templates/".$name;
+        $descriptionPublic = "public/templates/".$name;
         
         try {
             if($download) {
                 File::copyDirectory(storage_path($source), storage_path($tmp));
-                File::copyDirectory(storage_path($sourcePublic), storage_path($tmp.'/public/'.$name));
+                File::copyDirectory(storage_path($sourcePublic), storage_path($tmpPublic));
                 sc_zip(storage_path($this->tmpFolder."/".$sID), storage_path($this->tmpFolder.'/'.$sID.'.zip'));
                 $path = $sID;
             } else {
                 File::copyDirectory(storage_path($source), resource_path($description));
-                File::copyDirectory(storage_path($sourcePublic), base_path($descriptionAsset));
+                File::copyDirectory(storage_path($sourcePublic), base_path($descriptionPublic));
             }
             File::deleteDirectory(storage_path($this->tmpFolder.'/'.$sID));
         } catch(\Exception $e) {
@@ -112,12 +113,15 @@ class MakePlugin extends Command
         }
         $pluginUrlKey = sc_word_format_url($key);
 
-        $source = "format/plugin";
+        $source = "format/plugin/app";
+        $sourcePublic = "format/plugin/public";
         $sID = md5(time());
-        $tmp = $this->tmpFolder."/".$sID.'/'.$pluginCode.'/'.$pluginKey;
+        $tmp = $this->tmpFolder."/".$sID.'/'.$pluginKey.'/app';
+        $tmpPublic = $this->tmpFolder."/".$sID.'/'.$pluginKey.'/public';
         $description = 'Plugins/'.$pluginCode.'/'.$pluginKey;
         try {
             File::copyDirectory(storage_path($source), storage_path($tmp));
+            File::copyDirectory(storage_path($sourcePublic), storage_path($tmpPublic));
 
             $adminController = file_get_contents(storage_path($tmp.'/Admin/AdminController.php'));
             $adminController      = str_replace('Plugin_Code', $pluginCode, $adminController);
@@ -167,6 +171,7 @@ class MakePlugin extends Command
                 $path = $sID;
             } else {
                 File::copyDirectory(storage_path($tmp), app_path($description));
+                File::copyDirectory(storage_path($tmpPublic), public_path($description));
             }
             File::deleteDirectory(storage_path($this->tmpFolder.'/'.$sID));
         } catch(\Exception $e) {

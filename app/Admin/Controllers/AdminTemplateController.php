@@ -1,12 +1,12 @@
 <?php
-#app/Http/Admin/Controllers/ShopTemplateController.php
+#app/Http/Admin/Controllers/AdminTemplateController.php
 namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminStore;
 use Illuminate\Support\Facades\File;
 
-class ShopTemplateController extends Controller
+class AdminTemplateController extends Controller
 {
     public function index()
     {

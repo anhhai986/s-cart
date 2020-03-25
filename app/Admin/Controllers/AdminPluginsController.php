@@ -69,6 +69,7 @@ class AdminPluginsController extends Controller
         $namespace = sc_get_class_plugin_config($code, $key);
         $response = (new $namespace)->uninstall();
         File::deleteDirectory(app_path('Plugins/'.$code.'/'.$key));
+        File::deleteDirectory(public_path('Plugins/'.$code.'/'.$key));
         return json_encode($response);
     }
     public function enable()

@@ -29,11 +29,11 @@
                 <tbody>
                   @foreach ($templates as $key => $template)
                     <tr>
-                     <td>{!!sc_image_render($template['config']['image']??'','50px','', $template['config']['name']??'')!!}</td>
+                     <td>{!!sc_image_render(asset('templates/'.$key.'/'.$template['config']['image'])??'','50px','', $template['config']['name']??'')!!}</td>
                      <td>{{ $template['config']['name']??'' }}</td>
                      <td>{{ $key??'' }}</td>
                      <td onclick="imagedemo('{{ asset('templates/'.$key.'/images/demo.jpg') }}')"><a>Click</a></td>
-                     <td>{{ $template['config']['username']??'' }}</td>
+                     <td>{{ $template['config']['auth']??'' }}</td>
                      <td>{{ $template['config']['email']??'' }}</td>
                      <td>{{ $template['config']['website']??'' }} <a href="{{ $template['config']['website']??'' }}" target=_new><i class="fa fa-share" aria-hidden="true"></i></a></td>
                      <td>{{ $template['config']['version']??'' }}</td>

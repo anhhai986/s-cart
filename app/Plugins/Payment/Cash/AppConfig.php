@@ -16,7 +16,7 @@ class AppConfig extends ConfigDefault
     {
         $this->pathPlugin = $this->configGroup . '/' . $this->configCode . '/' . $this->configKey;
         $this->title = trans($this->pathPlugin.'::lang.title');
-        $this->image = 'images/' . $this->pathPlugin . '.png';
+        $this->image = $this->pathPlugin.'/images/logo.png';
         $this->version = '4.0';
         $this->auth = 'Naruto';
         $this->link = 'https://s-cart.org';

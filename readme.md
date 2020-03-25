@@ -89,6 +89,7 @@ Option 1: **From composer**
 ```
 composer create-project lanhktc/s-cart
 ```
+
 Option 2: **From github**
 ```
 gitclone https://github.com/lanhktc/s-cart.git s-cart
