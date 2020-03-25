@@ -30,7 +30,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="first_name" type="text" class="form-control" name="first_name" required
-                                    value="{{ (old('first_name'))?old('first_name'):$dataUser['first_name']}}">
+                                    value="{{ (old('first_name'))?old('first_name'):$user['first_name']}}">
 
                                 @if($errors->has('first_name'))
                                 <span class="help-block">{{ $errors->first('first_name') }}</span>
@@ -44,7 +44,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="last_name" type="text" class="form-control" name="last_name" required
-                                    value="{{ (old('last_name'))?old('last_name'):$dataUser['last_name']}}">
+                                    value="{{ (old('last_name'))?old('last_name'):$user['last_name']}}">
 
                                 @if($errors->has('last_name'))
                                 <span class="help-block">{{ $errors->first('last_name') }}</span>
@@ -59,7 +59,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="first_name" type="text" class="form-control" name="first_name" required
-                                    value="{{ (old('first_name'))?old('first_name'):$dataUser['first_name']}}">
+                                    value="{{ (old('first_name'))?old('first_name'):$user['first_name']}}">
 
                                 @if($errors->has('first_name'))
                                 <span class="help-block">{{ $errors->first('first_name') }}</span>
@@ -77,7 +77,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="phone" type="text" class="form-control" name="phone" required
-                                    value="{{ (old('phone'))?old('phone'):$dataUser['phone']}}">
+                                    value="{{ (old('phone'))?old('phone'):$user['phone']}}">
 
                                 @if($errors->has('phone'))
                                 <span class="help-block">{{ $errors->first('phone') }}</span>
@@ -94,7 +94,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="postcode" type="text" class="form-control" name="postcode" required
-                                    value="{{ (old('postcode'))?old('postcode'):$dataUser['postcode']}}">
+                                    value="{{ (old('postcode'))?old('postcode'):$user['postcode']}}">
 
                                 @if($errors->has('postcode'))
                                 <span class="help-block">{{ $errors->first('postcode') }}</span>
@@ -109,7 +109,7 @@ $countries
                                 class="col-md-4 col-form-label text-md-right">{{ trans('account.email') }}</label>
 
                             <div class="col-md-6">
-                                {{ $dataUser['email'] }}
+                                {{ $user['email'] }}
 
                             </div>
                         </div>
@@ -121,7 +121,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="address1" type="text" class="form-control" name="address1" required
-                                    value="{{ (old('address1'))?old('address1'):$dataUser['address1']}}">
+                                    value="{{ (old('address1'))?old('address1'):$user['address1']}}">
 
                                 @if($errors->has('address1'))
                                 <span class="help-block">{{ $errors->first('address1') }}</span>
@@ -135,7 +135,7 @@ $countries
                                 class="col-md-4 col-form-label text-md-right">{{ trans('account.address2') }}</label>
                             <div class="col-md-6">
                                 <input id="address2" type="text" class="form-control" name="address2" required
-                                    value="{{ (old('address2'))?old('address2'):$dataUser['address2']}}">
+                                    value="{{ (old('address2'))?old('address2'):$user['address2']}}">
 
                                 @if($errors->has('address2'))
                                 <span class="help-block">{{ $errors->first('address2') }}</span>
@@ -150,7 +150,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="address1" type="text" class="form-control" name="address1" required
-                                    value="{{ (old('address1'))?old('address1'):$dataUser['address1']}}">
+                                    value="{{ (old('address1'))?old('address1'):$user['address1']}}">
 
                                 @if($errors->has('address1'))
                                 <span class="help-block">{{ $errors->first('address1') }}</span>
@@ -163,7 +163,7 @@ $countries
 
                         @if (sc_config('customer_country'))
                         @php
-                        $country = (old('country'))?old('country'):$dataUser['country'];
+                        $country = (old('country'))?old('country'):$user['country'];
                         @endphp
 
                         <div class="form-group row {{ $errors->has('country') ? ' has-error' : '' }}">
@@ -187,7 +187,7 @@ $countries
 
                         @if (sc_config('customer_sex'))
                         @php
-                        $sex = old('sex')?old('sex'):$dataUser['sex'];
+                        $sex = old('sex')?old('sex'):$user['sex'];
                         @endphp
                         <div class="form-group{{ $errors->has('sex') ? ' has-error' : '' }}">
                             <label
@@ -213,7 +213,7 @@ $countries
                             <div class="col-md-6">
                                 <input type="date" id="birthday" data-date-format="YYYY-MM-DD" class="form-control"
                                     name="birthday" required
-                                    value="{{ (old('birthday'))?old('birthday'):$dataUser['birthday']}}">
+                                    value="{{ (old('birthday'))?old('birthday'):$user['birthday']}}">
 
                                 @if($errors->has('birthday'))
                                 <span class="help-block">{{ $errors->first('birthday') }}</span>
@@ -230,7 +230,7 @@ $countries
 
                             <div class="col-md-6">
                                 <input id="group" type="text" class="form-control" name="group" required
-                                    value="{{ (old('group'))?old('group'):$dataUser['group']}}">
+                                    value="{{ (old('group'))?old('group'):$user['group']}}">
 
                                 @if($errors->has('group'))
                                 <span class="help-block">{{ $errors->first('group') }}</span>
